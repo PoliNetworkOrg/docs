@@ -154,6 +154,16 @@ const config: Config = {
           line: 'add-highlight-next-line',
           block: {start: 'add-highlight-start', end: 'add-highlight-end'},
         },
+        {
+          className: 'code-block-remove-line',
+          line: 'remove-highlight-next-line',
+          block: {start: 'remove-highlight-start', end: 'remove-highlight-end'},
+        },
+        {
+          className: 'code-block-error-line',
+          line: 'error-highlight-next-line',
+          block: {start: 'error-highlight-start', end: 'error-highlight-end'},
+        },
       ]
     },
   } satisfies Preset.ThemeConfig,
