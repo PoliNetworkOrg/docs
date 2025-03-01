@@ -328,3 +328,140 @@ Inner error: {
 #error-highlight-end
 ```
 :::
+
+
+## Examples
+In this section you can find working examples.  
+It is recommended to read the ["Basics" section](#basics) to understand how it works.
+
+:::note
+You still need to set `tenantId`, `userAssignedIdentityID` and secret keys to make it work.
+:::
+
+### Minimal
+```yaml title="test-secret/spc.yaml"
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: test-secret-spc
+  namespace: test-secret
+spec:
+  provider: azure
+  parameters:
+    usePodIdentity: 'false'
+    useVMManagedIdentity: 'true'                                   
+    userAssignedIdentityID: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' 
+    tenantId: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'               
+    keyvaultName: 'kv-polinetwork'                                 
+    objects: |
+      array:
+        - |
+          objectName: <secret-1-key>            
+          objectType: secret
+        - |
+          objectName: <secret-2-key>            
+          objectType: secret
+```
+
+```yaml title="test-secret/example-pod.yaml"
+kind: Pod
+apiVersion: v1
+metadata:
+  name: example-pod
+  namespace: test-secret
+spec:
+  containers:
+    - name: busybox
+      image: registry.k8s.io/e2e-test-images/busybox:1.29-4
+      command:
+        - '/bin/sleep'
+        - '10000'
+      volumeMounts:
+        - name: secrets-store
+          mountPath: '/mnt/secrets-store'
+          readOnly: true
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 250m
+          memory: 256Mi
+
+  volumes:
+    - name: secrets-store
+      csi:
+        driver: secrets-store.csi.k8s.io
+        readOnly: true
+        volumeAttributes:
+          secretProviderClass: 'test-secret-spc'
+```
+
+### Environment Variable
+
+```yaml title="test-secret-env/spc.yaml"
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: test-secret-env-spc
+  namespace: test-secret-env
+spec:
+  provider: azure
+  parameters:
+    usePodIdentity: 'false'
+    useVMManagedIdentity: 'true'                                   
+    userAssignedIdentityID: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' 
+    tenantId: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'               
+    keyvaultName: 'kv-polinetwork'                                 
+    secretObjects:
+      - secretName: azure-kv
+        type: Opaque
+        data:
+          - objectName: <secret-key>
+            key: example-secret
+    objects: |
+      array:
+        - |
+          objectName: <secret-key>            
+          objectType: secret
+```
+
+```yaml title="test-secret-env/example-pod.yaml"
+kind: Pod
+apiVersion: v1
+metadata:
+  name: example-pod
+  namespace: test-secret-env
+spec:
+  containers:
+    - name: busybox
+      image: registry.k8s.io/e2e-test-images/busybox:1.29-4
+      command:
+        - '/bin/sleep'
+        - '10000'
+      volumeMounts:
+        - name: secrets-store
+          mountPath: '/mnt/secrets-store'
+          readOnly: true
+      env:
+        - name: EXAMPLE_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: azure-kv
+              key: example-secret
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 250m
+          memory: 256Mi
+
+  volumes:
+    - name: secrets-store
+      csi:
+        driver: secrets-store.csi.k8s.io
+        readOnly: true
+        volumeAttributes:
+          secretProviderClass: 'test-secret-env-spc'
+```
