@@ -14,7 +14,7 @@ The following sections explain how to add a new secret.
 There are three required steps:
 
 1. Add the secret into the "KV"
-2. Create (if not exists) a `SecretProviderClass` in the k8s **namespace** (e.g. `bot-prod`), specifying the secrets you want to expose to the namespace's pods.
+2. Create and configure a `SecretProviderClass`
 3. Mount the secret volume inside the pod
 
 :::tip
@@ -41,44 +41,18 @@ kubectl get secretproviderclass --namespace <namespace>
 
 you should see a message like `No resources found in <namespace> namespace.`
 
-Otherwise the `SecretProviderClass` already exists, then you can add a new secret by updating its manifest:
+Otherwise the `SecretProviderClass` already exists and you can directly 
+[add a new secret](#add-kv-secrets-into-the-secretproviderclass).
 
-```yaml
-apiVersion: secrets-store.csi.x-k8s.io/v1
-kind: SecretProviderClass
-metadata:
-  name: <name>
-  namespace: <namespace>
-spec:
-  provider: azure
-  parameters:
-    usePodIdentity: 'false'
-    useVMManagedIdentity: 'true'                                   
-    userAssignedIdentityID: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' 
-    tenantId: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'               
-    keyvaultName: 'kv-polinetwork'                                 
-    objects: |
-      array:
-        - |
-          objectName: <secret-name>            
-          objectType: secret
-        # add-highlight-start
-        - |
-          objectName: <your-new-secret-name>            
-          objectType: secret
-        # add-highlight-end
-```
 :::
 
-If the `SecretProviderClass` does not already exist in the namespace, 
-you can create it with a `yaml` file with the following content:
-
-```yaml
+This is a basic `SecretProviderClass` manifest:
+```yaml title="spc.yaml"
 apiVersion: secrets-store.csi.x-k8s.io/v1
 kind: SecretProviderClass
 metadata:
   name: <name>                  # a recommended name convention is "<namespace>-spc"
-  namespace: <k8s-namespace>    # if not specified, the default namespace is "default"
+  namespace: <namespace>        # if not specified, the default k8s namespace is "default"
 spec:
   provider: azure
   parameters:
@@ -87,20 +61,9 @@ spec:
     userAssignedIdentityID: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'  # Set the clientID of the managed identity to use
     tenantId: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'                # The tenant ID of the key vault
     keyvaultName: 'kv-polinetwork'                                  # Set to the name of your key vault
-    objects: |
-      array:
-        - |
-          objectName: <secret-1-name>            
-          objectType: secret
-        - |
-          objectName: <secret-2-name>            
-          objectType: secret
 ```
 
-
-This maps the secrets `<secret-1-name>` and `<secret-2-name>`  from the key vault `kv-polinetwork` to a volume you can mount in your pod.  
-A few things to note
-
+A few things to note:
 - `usePodIdentity` should be set to `false` and `useVMManagedIdentity` should be set to `true` since we are using a VM managed identity.
 - `userAssignedIdentityID` should be set to the client ID of the managed identity we linked to the key vault.
 - `tenantId` should be set to the tenant ID of our Azure tenant.
@@ -126,12 +89,44 @@ az aks show --resource-group <resource-group> --name <cluster-name> --query addo
 
 :::
 
+### Add "KV" secrets into the `SecretProviderClass`
+
+Inside the `SecretProviderClass` manifest, add "KV" secrets:
+```yaml title="spc.yaml"
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: <name>
+  namespace: <namespace>
+spec:
+  provider: azure
+  parameters:
+    usePodIdentity: 'false'
+    useVMManagedIdentity: 'true'                                   
+    userAssignedIdentityID: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' 
+    tenantId: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'               
+    keyvaultName: 'kv-polinetwork'                                 
+    # add-highlight-start
+    objects: |
+      array:
+        - |
+          objectName: <secret-1-key>            
+          objectType: secret
+        - |
+          objectName: <secret-2-key>            
+          objectType: secret
+    # add-highlight-end
+```
+
+In this example, we map two secrets (`<secret-1-key>` and `<secret-2-key>`) 
+from the key vault `kv-polinetwork` to a volume you can mount in your pod.  
+
 ### Mount the secret volume inside the pod
 
 The secret must be mounted as a volume.  
-Here is an example pod `yaml` manifest:
+Here is an example pod manifest:
 
-```yaml
+```yaml title="my-spc-example-pod.yaml"
 kind: Pod
 apiVersion: v1
 metadata:
@@ -169,11 +164,11 @@ spec:
 #add-highlight-end
 ```
 
-After applying this manifest to the cluster, you can retrieve the secret by reading the files in the `/mnt/secrets-store/` directory.  
+After applying this manifest to the cluster, you can retrieve the secret by reading the files in the `/mnt/secrets-store/` directory (`mountPath` parameter).  
 To test if everything works, try running the following command.
 
 ```sh
-kubectl exec -it my-spc-example-pod -- cat /mnt/secrets-store/<secret-1-name>
+kubectl exec -it my-spc-example-pod -- cat /mnt/secrets-store/<secret-1-key>
 ```
 
 :::tip
@@ -184,7 +179,7 @@ all of them can be found in the same directory, you can see them by running:
 kubectl exec -it my-spc-example-pod -- ls /mnt/secrets-store
 ```
 
-In [our example](#create-the-secretproviderclass), we have added `<secret-1-name>` and `<secret-2-name>`.
+In the [previous section](#add-kv-secrets-into-the-secretproviderclass), we have added `<secret-1-key>` and `<secret-2-key>`.
 
 :::
 
@@ -223,13 +218,13 @@ spec:
         data:
           # the secret that we want to expose also as k8s secret should be added here.
           # important to distinguish objectName (reference to "KV") from key (custom name)
-          - objectName: <secret-1-name>     # secret name inside the "KV"
+          - objectName: <secret-1-key>     # secret name inside the "KV"
             key: example-secret             # custom k8s secret's key
     # add-highlight-end
     objects: |
       array:
         - |
-          objectName: <secret-1-name>            
+          objectName: <secret-1-key>            
           objectType: secret
 
 ...
