@@ -33,17 +33,45 @@ References:
 
 :::important
 Check if the namespace already contains a `SecretProviderClass` before creating a new one.  
-Running the following command
+Running the following command:
 
 ```sh
 kubectl get secretproviderclass --namespace <namespace>
 ```
 
-you should see a message like `No resources found in <namespace> namespace.`  
-Otherwise the `SecretProviderClass` already exists.
+you should see a message like `No resources found in <namespace> namespace.`
+
+Otherwise the `SecretProviderClass` already exists, then you can add a new secret by updating its manifest:
+
+```yaml
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: <name>
+  namespace: <namespace>
+spec:
+  provider: azure
+  parameters:
+    usePodIdentity: 'false'
+    useVMManagedIdentity: 'true'                                   
+    userAssignedIdentityID: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' 
+    tenantId: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'               
+    keyvaultName: 'kv-polinetwork'                                 
+    objects: |
+      array:
+        - |
+          objectName: <secret-name>            
+          objectType: secret
+        # add-highlight-start
+        - |
+          objectName: <your-new-secret-name>            
+          objectType: secret
+        # add-highlight-end
+```
 :::
 
-To create the `SecretProviderClass`, create a `yaml` file with the following content:
+If the `SecretProviderClass` does not already exist in the namespace, 
+you can create it with a `yaml` file with the following content:
 
 ```yaml
 apiVersion: secrets-store.csi.x-k8s.io/v1
