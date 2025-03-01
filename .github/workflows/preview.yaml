@@ -1,0 +1,97 @@
+name: Preview
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed
+
+concurrency:
+  group: preview-${{ github.event_name }}-${{ github.event.number || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    name: Preview
+    runs-on: ubuntu-22.04
+    env:
+      PREVIEW_REPO: PoliNetworkOrg/preview
+      PAGES_BASE: https://PoliNetworkOrg.github.io/preview
+
+    steps:
+      - name: Checkout branch
+        if: ${{ !startsWith(github.event_name, 'pull_request') }}
+        uses: actions/checkout@v4
+
+      - name: Checkout PR head
+        if: ${{ startsWith(github.event_name, 'pull_request') }}
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+
+      # Assuming you're using Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        if: ${{ github.event.action != 'closed' }} # Skipping these steps if the PR has been closed
+        with:
+          node-version-file: "package.json"
+        
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-V
+
+      - name: Install dependencies
+        run: pnpm install
+
+      # This will calculate the base URL for the website, based on the event that triggered the workflow.
+      # Leave this step as it is, unless you know what you're doing.
+      - name: Determine base URL
+        if: ${{ github.event.action != 'closed' }}
+        id: baseurl
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request_target" ]; then
+            full="${{ env.PAGES_BASE }}/${{ github.repository }}/pr/${{ github.event.number }}"
+          else
+            full="${{ env.PAGES_BASE }}/${{ github.repository }}/branch/${{ github.ref_name }}"
+          fi
+
+          relative=/$(echo $full | cut -d/ -f4-)
+
+          echo "full=$full" >> $GITHUB_OUTPUT
+          echo "relative=$relative" >> $GITHUB_OUTPUT
+
+      # Run your usual build command, but make sure to use the correct base URL
+      # This example assumes you're using React, and that you're using the PUBLIC_URL env variable
+      - name: Build
+        if: ${{ github.event.action != 'closed' }}
+        run: pnpm build
+        env:
+          PUBLIC_URL: ${{ steps.baseurl.outputs.relative }}
+
+      # This will trigger the action. Make sure to change the build_dir input to the correct directory
+      - uses: EndBug/pages-preview@v1
+        with:
+          build_dir: build # Change this!
+          preview_base_url: ${{ env.PAGES_BASE }}
+          preview_repo: ${{ env.PREVIEW_REPO }}
+          preview_token: ${{ secrets.PREVIEW_TOKEN }}

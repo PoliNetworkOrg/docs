@@ -23,7 +23,7 @@ const config: Config = {
   favicon: 'img/favicon.ico',
 
   url: 'https://docs.polinetwork.org',
-  baseUrl: '/',
+  baseUrl: process.env.PUBLIC_URL || '/',
   organizationName: 'polinetworkorg',
   projectName: 'docs',
 
