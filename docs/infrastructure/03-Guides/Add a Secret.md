@@ -186,27 +186,30 @@ In the [previous section](#add-kv-secrets-into-the-secretproviderclass), we have
 ## Loading the secret inside an Environment Variable
 
 :::important
-Even if you want to load the secret as an ENV variable, it's **REQUIRED** to follow every steps in the previous section, including mounting the secret volume.
+Even if you want to load the secret as an ENV variable, it's **REQUIRED** to follow every steps in the previous section, including 
+[mounting the secret volume](#mount-the-secret-volume-inside-the-pod).
 :::
 
 To load the secret as an Environment Variable follows the following steps.
 
 ### Register the secret as a k8s secret
+Inside the `ServiceProviderClass` manifest, add a new field `secretObjects` to create a 
+new k8s secret collection:
 
 ```yaml title="spc.yaml"
 apiVersion: secrets-store.csi.x-k8s.io/v1
 kind: SecretProviderClass
 metadata:
-  name: <name>                  # a recommended name convention is "<namespace>-spc"
-  namespace: <k8s-namespace>    # if not specified, the default namespace is "default"
+  name: <name>
+  namespace: <namespace>
 spec:
   provider: azure
   parameters:
     usePodIdentity: 'false'
-    useVMManagedIdentity: 'true'                                    # Set to true for using managed identity
-    userAssignedIdentityID: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'  # Set the clientID of the managed identity to use
-    tenantId: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'                # The tenant ID of the key vault
-    keyvaultName: 'kv-polinetwork'                                  # Set to the name of your key vault
+    useVMManagedIdentity: 'true'                                   
+    userAssignedIdentityID: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' 
+    tenantId: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'               
+    keyvaultName: 'kv-polinetwork'                                 
     # add-highlight-start
     secretObjects:
       # each of these is a COLLECTION of secrets.
@@ -218,7 +221,7 @@ spec:
         data:
           # the secret that we want to expose also as k8s secret should be added here.
           # important to distinguish objectName (reference to "KV") from key (custom name)
-          - objectName: <secret-1-key>     # secret name inside the "KV"
+          - objectName: <secret-1-key>      # secret name inside the "KV"
             key: example-secret             # custom k8s secret's key
     # add-highlight-end
     objects: |
@@ -226,31 +229,54 @@ spec:
         - |
           objectName: <secret-1-key>            
           objectType: secret
-
-...
-spec:
-  provider: azure
-  ...
 ```
 
 
 ### Use the secret as environment variable
-Like before, you can then reference the secret in your pod manifest:
+After [mounting the secret volume](#mount-the-secret-volume-inside-the-pod) and [configuring the k8s secret](#register-the-secret-as-a-k8s-secret), 
+you can add an environment variable with the secret as value reference:
 
-```yaml
-
----
+```yaml title="my-spc-example-pod.yaml"
+kind: Pod
+apiVersion: v1
+metadata:
+  name: my-spc-example-pod
+  namespace: <namespace>
 spec:
   containers:
-    env:
-      # add the env variable
-      - name: EXAMPLE_SECRET # env variable name (independent from the name of the secret)
-        valueFrom:
-          secretKeyRef:
-            name: azure-kv # k8s secret collection name
-            key: example-secret # secret key inside of k8s secret collection specified in the line above
-```
+    - name: busybox
+      image: registry.k8s.io/e2e-test-images/busybox:1.29-4
+      command:
+        - '/bin/sleep'
+        - '10000'
+      volumeMounts:
+        - name: secrets-store
+          mountPath: '/mnt/secrets-store'
+          readOnly: true
+      # add-highlight-start
+      env:
+        - name: EXAMPLE_SECRET # env variable name (independent from the name of the secret)
+          valueFrom:
+            secretKeyRef:
+              name: azure-kv # k8s secret collection name
+              key: example-secret # secret key inside of k8s secret collection specified in the line above
+      # add-highlight-end
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 250m
+          memory: 256Mi
 
+  volumes:
+    - name: secrets-store
+      csi:
+        driver: secrets-store.csi.k8s.io
+        readOnly: true
+        volumeAttributes:
+          secretProviderClass: '<namespace>-spc'
+```
 
 ## "KV" management
 ### Add or update a secret
