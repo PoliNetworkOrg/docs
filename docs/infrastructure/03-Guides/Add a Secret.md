@@ -23,21 +23,7 @@ Whenever there is `<something>` in the code or in a command, that's a paramter y
 
 ### Add the secret into the "KV"
 
-You can add (or update) a secret with the following command:
-```sh
-az keyvault secret set --vault-name "kv-polinetwork" --name "<secret-name>" --value "<secret-value>"
-```
-
-:::tip
-If the secret value is too long or you don't want to copy/paste in terminal you can use a file instead.
-1. Paste the secret value into a text file (no extension or ".txt" is valid) on a **single line**
-2. Run the following command
-   ```sh
-   az keyvault secret set --vault-name "kv-polinetwork" --name "<secret-name>" --file "<filename>"
-   ```
-:::
-
-For more information about "KV" management, see the ["KV" management](#kv-management) section.
+See [this section](#add-or-update-a-secret).
 
 ### Create the `SecretProviderClass`
 
@@ -242,7 +228,19 @@ spec:
 
 ## "KV" management
 ### Add or update a secret
-See [this section](#add-the-secret-into-the-kv)
+You can add (or update) a secret with the following command:
+```sh
+az keyvault secret set --vault-name "kv-polinetwork" --name "<secret-name>" --value "<secret-value>"
+```
+
+:::tip
+If the secret value is too long or you don't want to copy/paste in terminal you can use a file instead.
+1. Paste the secret value into a text file (no extension or ".txt" is valid) on a **single line**
+2. Run the following command
+   ```sh
+   az keyvault secret set --vault-name "kv-polinetwork" --name "<secret-name>" --file "<filename>"
+   ```
+:::
 
 ### Delete a secret
 You can delete a secret with the following command:
