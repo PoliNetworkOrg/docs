@@ -465,3 +465,4 @@ spec:
         volumeAttributes:
           secretProviderClass: 'test-secret-env-spc'
 ```
+
