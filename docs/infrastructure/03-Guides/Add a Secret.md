@@ -177,11 +177,14 @@ kubectl exec -it my-spc-example-pod -- cat /mnt/secrets-store/<secret-1-name>
 ```
 
 :::tip
-More than one secret can be mounted at the same time by adding more entries in the array, all of them can be found in the same directory, you can see them by running:
+More than one secret can be mounted at the same time by adding more entries in the array,
+all of them can be found in the same directory, you can see them by running:
 
 ```sh
 kubectl exec -it my-spc-example-pod -- ls /mnt/secrets-store
 ```
+
+In [our example](#create-the-secretproviderclass), we have added `<secret-1-name>` and `<secret-2-name>`.
 
 :::
 
