@@ -211,17 +211,17 @@ spec:
     keyvaultName: 'kv-polinetwork'                                  # Set to the name of your key vault
     # add-highlight-start
     secretObjects:
-      # ognuno di questi e' una COLLEZIONE di secrets
-      # si possono definire piu' collezioni separate, ma per identificare i secret Azure dagli altri k8s secrets,
-      # utilizziamo una collezione che contiene più secrets (come se fosse un Object appunto)
-      # importante: va creato solo la prima volta, poi basta aggiungere una key sotto
+      # each of these is a COLLECTION of secrets.
+      # multiple separate collections can be defined, but to identify Azure secrets from other k8s secrets,
+      # we use a collection that contains multiple secrets (as if it were an Object in fact).
+      # important: it only needs to be created the first time, then just add a key underneath
       - secretName: azure-kv
         type: Opaque
         data:
-          # qui va aggiunto il secret che vogliamo esporre anche come k8s secret
-          # importante distinguere objectName (reference al KV) dalla key (nome personalizzato)
-          - objectName: <secret-1-name>     # nome del secret dentro il KV di azure
-            key: example-secret             # key personalizzata del k8s secret
+          # the secret that we want to expose also as k8s secret should be added here.
+          # important to distinguish objectName (reference to "KV") from key (custom name)
+          - objectName: <secret-1-name>     # secret name inside the "KV"
+            key: example-secret             # custom k8s secret's key
     # add-highlight-end
     objects: |
       array:
@@ -245,12 +245,12 @@ Like before, you can then reference the secret in your pod manifest:
 spec:
   containers:
     env:
-      # aggiungiamo l'env variable
-      - name: EXAMPLE_SECRET # nome dell'env variable (indipendente dal nome del secret)
+      # add the env variable
+      - name: EXAMPLE_SECRET # env variable name (independent from the name of the secret)
         valueFrom:
           secretKeyRef:
-            name: azure-kv # nome della collezione di k8s secret
-            key: example-secret # key del secret specifico da utilizzare dentro la collezione
+            name: azure-kv # k8s secret collection name
+            key: example-secret # secret key inside of k8s secret collection specified in the line above
 ```
 
 
