@@ -6,25 +6,60 @@
 
 /* You can override the default Infima variables here. */
 :root {
-  --ifm-color-primary: #1055AD;
+  --ifm-color-primary: #1055ad;
   --ifm-color-primary-dark: #0e4c9b;
   --ifm-color-primary-darker: #0c448a;
-  --ifm-color-primary-darkest: #0B3B79;
-  --ifm-color-primary-light: #2766B5;
-  --ifm-color-primary-lighter: #3F76BD;
-  --ifm-color-primary-lightest: #5788C5;
+  --ifm-color-primary-darkest: #0b3b79;
+  --ifm-color-primary-light: #2766b5;
+  --ifm-color-primary-lighter: #3f76bd;
+  --ifm-color-primary-lightest: #5788c5;
   --ifm-code-font-size: 95%;
+
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  --add-highlight-line-bg: rgba(46, 160, 67, 0.1);
+  --add-highlight-line-border: rgba(46, 160, 67, 0.4);
+  --remove-highlight-line-bg: rgba(248, 81, 73, 0.1);
+  --remove-highlight-line-border: rgba(248, 81, 73, 0.4);
+  --error-highlight-line-color: rgba(248, 0, 0, 1);
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
 [data-theme='dark'] {
-  --ifm-color-primary: #1055AD;
+  --ifm-color-primary: #1055ad;
   --ifm-color-primary-dark: #0e4c9b;
   --ifm-color-primary-darker: #0c448a;
-  --ifm-color-primary-darkest: #0B3B79;
-  --ifm-color-primary-light: #2766B5;
-  --ifm-color-primary-lighter: #3F76BD;
-  --ifm-color-primary-lightest: #5788C5;
+  --ifm-color-primary-darkest: #0b3b79;
+  --ifm-color-primary-light: #2766b5;
+  --ifm-color-primary-lighter: #3f76bd;
+  --ifm-color-primary-lightest: #5788c5;
+
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+  --add-highlight-line-bg: rgba(46, 160, 67, 0.1);
+  --add-highlight-line-border: rgba(46, 160, 67, 0.4);
+  --remove-highlight-line-bg: rgba(248, 81, 73, 0.1);
+  --remove-highlight-line-border: rgba(248, 81, 73, 0.4);
+  --error-highlight-line-color: rgba(255, 74, 63, 1);
+}
+
+.code-block-add-line {
+  background-color: var(--add-highlight-line-bg);
+  display: block;
+  margin: 0 calc(-1 * var(--ifm-pre-padding));
+  padding: 0 var(--ifm-pre-padding);
+  border-left: 3px solid var(--add-highlight-line-border);
+}
+
+.code-block-remove-line{
+  background-color: var(--remove-highlight-line-bg);
+  display: block;
+  margin: 0 calc(-1 * var(--ifm-pre-padding));
+  padding: 0 var(--ifm-pre-padding);
+  border-left: 3px solid var(--remove-highlight-line-border);
+}
+
+.code-block-error-line {
+  color: var(--error-highlight-line-color) !important;
+  display: block;
+  margin: 0 calc(-1 * var(--ifm-pre-padding));
+  padding: 0 var(--ifm-pre-padding);
 }
