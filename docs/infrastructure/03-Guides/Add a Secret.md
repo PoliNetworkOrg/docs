@@ -188,6 +188,8 @@ In the [previous section](#add-kv-secrets-into-the-secretproviderclass), we have
 :::important
 Even if you want to load the secret as an ENV variable, it's **REQUIRED** to follow every steps in the previous section, including 
 [mounting the secret volume](#mount-the-secret-volume-inside-the-pod).
+
+You can find more about why this is the case [here](https://github.com/kubernetes-sigs/secrets-store-csi-driver/issues/813)
 :::
 
 To load the secret as an Environment Variable follows the following steps.
