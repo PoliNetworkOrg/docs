@@ -58,5 +58,17 @@
   "engines": {
     "node": ">=22.14",
     "pnpm": ">=10"
+  },
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "@swc/core",
+      "core-js",
+      "core-js-pure"
+    ],
+    "onlyBuiltDependencies": [
+      "@swc/core",
+      "core-js",
+      "core-js-pure"
+    ]
   }
 }

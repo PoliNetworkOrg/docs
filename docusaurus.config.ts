@@ -175,11 +175,11 @@ const config: Config = {
         },
       ],
     },
-
-    markdown: {
-      mermaid: true,
-    },
   } satisfies Preset.ThemeConfig,
+
+  markdown: {
+    mermaid: true,
+  },
 }
 
 export default config
