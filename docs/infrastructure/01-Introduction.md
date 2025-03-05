@@ -25,11 +25,11 @@ AKS gives us the flexibility of a 10s pod deployment, reliability (with ArgoCD e
 ## About this documentation
 :::important
 Most of the docs explain procedures with the Azure CLI and the Kubernetes CLI.  
-Make sure to [install and configure them](./Tutorials/setup#azure-cli--kubectl) to follow along.  
+Make sure to [install and configure them](./getting-started/setup#azure-cli--kubectl) to follow along.  
 Alternatively, you can see the [official Azure documentation](https://learn.microsoft.com/en-us/azure/?product=popular) for how to use the Azure portal.
 :::
 
 
-The best place to start is going through the [Tutorials](./Tutorials/setup) section to get a high level overview of how things are organized.  
+The best place to start is going through the [Getting Started](./getting-started/setup) section to get a high level overview of how things are organized.  
 If you're looking for a guide on how to achieve a specific outcome, you can look in the [Guides](./Guides/Add%20a%20Secret).
 
