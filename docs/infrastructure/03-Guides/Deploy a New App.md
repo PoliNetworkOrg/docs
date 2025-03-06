@@ -12,7 +12,7 @@ Check [minikube](https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64
 :::note CD
 To deploy our applications, we use [ArgoCD](https://argo-cd.readthedocs.io/en/stable/) 
 with a [Git File Generator](https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Generators-Git/#git-generator-files) 
-pointing to the [polinetwork-cd](https://github.com/PoliNetworkOrg/polinetwork-cd) GitHub repo.
+pointing to the [polinetwork-cd](https://github.com/PoliNetworkOrg/polinetwork-cd/) GitHub repo.
 
 For more info, check out *[Getting Started / Basic Knowledge]*
 :::
@@ -53,5 +53,42 @@ Inside `src/` you can put one of the following:
 :::important
 If you would like to use the Docker Image Auto-Updater, base k8s manifests are not supported, you must choose between Kustomize and Helm Chart.
 
-For more info, check the *[relative section]*
+For more info, check the [relative section](#docker-image-auto-updater)
+:::
+
+## Docker Image Auto-Updater
+We use [ArgoCD Image Updater](https://argocd-image-updater.readthedocs.io/en/stable/) to 
+automatically update docker images in deployments.  
+This is an optional feature, but the alternative is a fixed version (e.g. `nginx:1.27.4`).  
+
+You can find a working example [here](https://github.com/PoliNetworkOrg/polinetwork-cd/tree/main/tests/docker-test).
+
+:::warning
+Consider the following manifest:
+```yaml
+kind: Pod
+apiVersion: v1
+metadata:
+  name: example-pod
+  namespace: test
+spec:
+  containers:
+    - name: nginx
+      image: nginx:latest
+```
+the image would **not update** if you **don't follow** this guide, even though there is `latest`.
+:::
+
+1. In the `spec.containers[x].image` field you must set a fixed digest, example:
+```yaml
+spec:
+  containers:
+  - name: docker-test-pod
+    image: toto04/testcontainer@sha256:b5ec2efcc11e90c2fd955cd1c01f3fdf7c2f18c77c213360addcd37be7e8f2f3
+```
+
+:::tip
+If you are using Docker Hub, you can find a digest going to the image homepage ([example](https://hub.docker.com/r/toto04/testcontainer/tags))
+under the tag you want to use (e.g. `latest`)
+
 :::
