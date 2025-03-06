@@ -33,6 +33,12 @@
   --ifm-color-primary-lighter: #3f76bd;
   --ifm-color-primary-lightest: #5788c5;
 
+  .hero--primary {
+    --ifm-heading-color: #ffffff;
+    --ifm-hero-text-color: #ffffff;
+  }
+
+
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
   --add-highlight-line-bg: rgba(46, 160, 67, 0.1);
   --add-highlight-line-border: rgba(46, 160, 67, 0.4);
