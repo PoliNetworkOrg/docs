@@ -1,4 +1,6 @@
-# Deploy a New App
+---
+title: Deploy a New App
+---
 
 ## Introduction
 

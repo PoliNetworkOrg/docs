@@ -1,4 +1,6 @@
-# Add a Secret
+---
+title: Add a New Secret
+---
 
 ## Introduction
 

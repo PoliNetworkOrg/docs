@@ -31,5 +31,5 @@ Alternatively, you can see the [official Azure documentation](https://learn.micr
 
 
 The best place to start is going through the [Tutorials](./Tutorials/setup) section to get a high level overview of how things are organized.  
-If you're looking for a guide on how to achieve a specific outcome, you can look in the [Guides](./Guides/Add%20a%20Secret).
+If you're looking for a guide on how to achieve a specific outcome, you can look in the [Guides](./Guides/add-a-new-secret).
 
