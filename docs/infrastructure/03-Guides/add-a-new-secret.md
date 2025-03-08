@@ -12,7 +12,6 @@ The following sections explain how to add a new secret.
 
 ## Basics
 
-
 There are three required steps:
 
 1. Add the secret into the "KV"
@@ -30,6 +29,7 @@ See [this section](#add-or-update-a-secret).
 ### Create the `SecretProviderClass`
 
 References:
+
 - [Microsoft Guide](https://learn.microsoft.com/en-us/azure/aks/csi-secrets-store-identity-access?tabs=azure-portal&pivots=access-with-a-user-assigned-managed-identity)
 - [Secrets Store CSI Driver](https://secrets-store-csi-driver.sigs.k8s.io)
 
@@ -43,12 +43,13 @@ kubectl get secretproviderclass --namespace <namespace>
 
 you should see a message like `No resources found in <namespace> namespace.`
 
-Otherwise the `SecretProviderClass` already exists and you can directly 
+Otherwise the `SecretProviderClass` already exists and you can directly
 [add a new secret](#add-kv-secrets-into-the-secretproviderclass).
 
 :::
 
 This is a basic `SecretProviderClass` manifest:
+
 ```yaml title="spc.yaml"
 apiVersion: secrets-store.csi.x-k8s.io/v1
 kind: SecretProviderClass
@@ -66,6 +67,7 @@ spec:
 ```
 
 A few things to note:
+
 - `usePodIdentity` should be set to `false` and `useVMManagedIdentity` should be set to `true` since we are using a VM managed identity.
 - `userAssignedIdentityID` should be set to the client ID of the managed identity we linked to the key vault.
 - `tenantId` should be set to the tenant ID of our Azure tenant.
@@ -87,13 +89,15 @@ az account show --query tenantId --output tsv
 ```sh
 az aks show --resource-group <resource-group> --name <cluster-name> --query addonProfiles.azureKeyvaultSecretsProvider.identity.clientId -o tsv
 ```
-`<resource-group>` and `<cluster-name>` can be found both in our [Terraform](https://github.com/PoliNetworkOrg/terraform/) or in the Azure Portal. 
+
+`<resource-group>` and `<cluster-name>` can be found both in our [Terraform](https://github.com/PoliNetworkOrg/terraform/) or in the Azure Portal.
 
 :::
 
 ### Add "KV" secrets into the `SecretProviderClass`
 
 Inside the `SecretProviderClass` manifest, add "KV" secrets:
+
 ```yaml title="spc.yaml"
 apiVersion: secrets-store.csi.x-k8s.io/v1
 kind: SecretProviderClass
@@ -120,7 +124,7 @@ spec:
     # add-highlight-end
 ```
 
-In this example, we map two secrets (`<secret-1-key>` and `<secret-2-key>`) 
+In this example, we map two secrets (`<secret-1-key>` and `<secret-2-key>`)
 from the key vault `kv-polinetwork` to a volume you can mount in your pod.  
 
 ### Mount the secret volume inside the pod
@@ -163,7 +167,7 @@ spec:
         readOnly: true
         volumeAttributes:
           secretProviderClass: '<namespace>-spc' # The name of the SecretProviderClass
-#add-highlight-end
+# add-highlight-end
 ```
 
 After applying this manifest to the cluster, you can retrieve the secret by reading the files in the `/mnt/secrets-store/` directory (`mountPath` parameter).  
@@ -188,7 +192,7 @@ In the [previous section](#add-kv-secrets-into-the-secretproviderclass), we have
 ## Loading the secret inside an Environment Variable
 
 :::important
-Even if you want to load the secret as an ENV variable, it's **REQUIRED** to follow every steps in the previous section, including 
+Even if you want to load the secret as an ENV variable, it's **REQUIRED** to follow every steps in the previous section, including
 [mounting the secret volume](#mount-the-secret-volume-inside-the-pod).
 
 You can find more about why this is the case [here](https://github.com/kubernetes-sigs/secrets-store-csi-driver/issues/813)
@@ -197,7 +201,8 @@ You can find more about why this is the case [here](https://github.com/kubernete
 To load the secret as an Environment Variable follows the following steps.
 
 ### Register the secret as a k8s secret
-Inside the `ServiceProviderClass` manifest, add a new field `secretObjects` to create a 
+
+Inside the `ServiceProviderClass` manifest, add a new field `secretObjects` to create a
 new k8s secret collection:
 
 ```yaml title="spc.yaml"
@@ -235,9 +240,9 @@ spec:
           objectType: secret
 ```
 
-
 ### Use the secret as environment variable
-After [mounting the secret volume](#mount-the-secret-volume-inside-the-pod) and [configuring the k8s secret](#register-the-secret-as-a-k8s-secret), 
+
+After [mounting the secret volume](#mount-the-secret-volume-inside-the-pod) and [configuring the k8s secret](#register-the-secret-as-a-k8s-secret),
 you can add an environment variable with the secret as value reference:
 
 ```yaml title="my-spc-example-pod.yaml"
@@ -283,40 +288,50 @@ spec:
 ```
 
 ## "KV" management
+
 ### Add or update a secret
+
 You can add (or update) a secret with the following command:
+
 ```sh
 az keyvault secret set --vault-name "kv-polinetwork" --name "<secret-name>" --value "<secret-value>"
 ```
 
 :::tip
 If the secret value is too long or you don't want to copy/paste in terminal you can use a file instead.
+
 1. Paste the secret value into a text file (no extension or ".txt" is valid) on a **single line**
 2. Run the following command
+
    ```sh
    az keyvault secret set --vault-name "kv-polinetwork" --name "<secret-name>" --file "<filename>"
    ```
+
 :::
 
 ### Delete a secret
+
 You can delete a secret with the following command:
+
 ```sh
 az keyvault secret delete --vault-name "kv-polinetwork" --name "<secret-name>"
 ```
 
 After the deletion, the secret remains in a `Recoverable State` for 7 days.  
 During this period the secret can be recovered with the following command:
+
 ```sh
 az keyvault secret recover --vault-name "kv-polinetwork" --name "<secret-name>"
 ```
 
 To **permanently delete** that secret, after 7 days from deletion you can run the following command:
+
 ```sh
 az keyvault secret purge --vault-name "kv-polinetwork" --name "<secret-name>"
 ```
 
 :::note
-To **update/re-set** that secret, during the 7 days retention period, you must recover it first, 
+To **update/re-set** that secret, during the 7 days retention period, you must recover it first,
 then run the command to update it
 
 If you try to `set` a secret that has been deleted within the last 7 days without restoring it first, you get the following error:
@@ -331,10 +346,11 @@ Inner error: {
 }
 #error-highlight-end
 ```
+
 :::
 
-
 ## Examples
+
 In this section you can find working examples.  
 It is recommended to read the ["Basics" section](#basics) to understand how it works.
 
@@ -343,7 +359,8 @@ You still need to set `tenantId`, `userAssignedIdentityID` and secret keys to ma
 :::
 
 ### Minimal
-```yaml title="test-secret/spc.yaml"
+
+```yaml title="test-secret/spc.yaml" showLineNumbers
 apiVersion: secrets-store.csi.x-k8s.io/v1
 kind: SecretProviderClass
 metadata:
@@ -367,7 +384,7 @@ spec:
           objectType: secret
 ```
 
-```yaml title="test-secret/example-pod.yaml"
+```yaml title="test-secret/example-pod.yaml" showLineNumbers
 kind: Pod
 apiVersion: v1
 metadata:
@@ -403,7 +420,7 @@ spec:
 
 ### Environment Variable
 
-```yaml title="test-secret-env/spc.yaml"
+```yaml title="test-secret-env/spc.yaml" showLineNumbers
 apiVersion: secrets-store.csi.x-k8s.io/v1
 kind: SecretProviderClass
 metadata:
@@ -430,7 +447,7 @@ spec:
           objectType: secret
 ```
 
-```yaml title="test-secret-env/example-pod.yaml"
+```yaml title="test-secret-env/example-pod.yaml" showLineNumbers
 kind: Pod
 apiVersion: v1
 metadata:
@@ -469,4 +486,3 @@ spec:
         volumeAttributes:
           secretProviderClass: 'test-secret-env-spc'
 ```
-

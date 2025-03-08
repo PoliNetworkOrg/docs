@@ -22,6 +22,8 @@
     "@docusaurus/core": "3.7.0",
     "@docusaurus/faster": "^3.7.0",
     "@docusaurus/preset-classic": "3.7.0",
+    "@docusaurus/theme-mermaid": "^3.7.0",
+    "@easyops-cn/docusaurus-search-local": "^0.48.5",
     "@mdx-js/react": "^3.0.0",
     "clsx": "^2.0.0",
     "prism-react-renderer": "^2.3.0",
@@ -58,6 +60,11 @@
     "pnpm": ">=10"
   },
   "pnpm": {
+    "ignoredBuiltDependencies": [
+      "@swc/core",
+      "core-js",
+      "core-js-pure"
+    ],
     "onlyBuiltDependencies": [
       "@swc/core",
       "core-js",

@@ -1,4 +1,4 @@
-import { themes as prismThemes } from 'prism-react-renderer'
+import materialThemes from './themes/material'
 import type { Config } from '@docusaurus/types'
 import type * as Preset from '@docusaurus/preset-classic'
 
@@ -50,6 +50,11 @@ const config: Config = {
         },
       } satisfies Preset.Options,
     ],
+  ],
+
+  themes: [
+    [require.resolve('@easyops-cn/docusaurus-search-local'), { hashed: true }],
+    '@docusaurus/theme-mermaid',
   ],
 
   themeConfig: {
@@ -140,33 +145,41 @@ const config: Config = {
         height: '100px',
       },
     },
+
     prism: {
-      theme: prismThemes.github,
-      darkTheme: prismThemes.dracula,
+      theme: materialThemes.darker,
+      darkTheme: materialThemes.darker,
       magicComments: [
         {
           className: 'theme-code-block-highlighted-line',
           line: 'highlight-next-line',
-          block: {start: 'highlight-start', end: 'highlight-end'},
+          block: { start: 'highlight-start', end: 'highlight-end' },
         },
         {
           className: 'code-block-add-line',
           line: 'add-highlight-next-line',
-          block: {start: 'add-highlight-start', end: 'add-highlight-end'},
+          block: { start: 'add-highlight-start', end: 'add-highlight-end' },
         },
         {
           className: 'code-block-remove-line',
           line: 'remove-highlight-next-line',
-          block: {start: 'remove-highlight-start', end: 'remove-highlight-end'},
+          block: {
+            start: 'remove-highlight-start',
+            end: 'remove-highlight-end',
+          },
         },
         {
           className: 'code-block-error-line',
           line: 'error-highlight-next-line',
-          block: {start: 'error-highlight-start', end: 'error-highlight-end'},
+          block: { start: 'error-highlight-start', end: 'error-highlight-end' },
         },
-      ]
+      ],
     },
   } satisfies Preset.ThemeConfig,
+
+  markdown: {
+    mermaid: true,
+  },
 }
 
 export default config
