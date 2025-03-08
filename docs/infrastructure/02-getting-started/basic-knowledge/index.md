@@ -14,22 +14,16 @@ Everything regarding the deployment of apps and services is divided into two rep
 
 ```mermaid
 flowchart TD
-  subgraph Github
-    tf([**terraform**])
-    cd([**polinetwork-cd**])
-  end
   subgraph Azure
-    vm[VMs and other resources]
     subgraph k8s[K8S cluster]
-      argocd[ArgoCD]
-      app@{ shape: processes, label: "Apps / Services" }
+      ArgoCD -.-> app[Apps and Services]
     end
+    vm[VMs and other resources] <--> k8s
   end
-
+  tf([*polinetworkorg*/**terraform**]) -.-> Azure
+  cd([*polinetworkorg*/**polinetwork-cd**]) <-.-> ArgoCD
   tf -.-> vm
   tf -.-> k8s
-  vm <--> k8s
-  cd <-.-> argocd --> app
 ```
 
 ### **Terraform: Definition and Purpose**  
