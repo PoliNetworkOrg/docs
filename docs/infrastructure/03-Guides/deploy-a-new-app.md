@@ -183,3 +183,27 @@ spec:
 # add-highlight-end
 ```
 :::
+
+## Options
+These are some useful options you can configure by editing the `config.json` file.
+### Disable an app
+If you want to disable an app (excluding it from the git generator) you can add `"disabled": true`.  
+Example:
+```yaml title="config.json"
+{
+# add-highlight-next-line
+  "disabled": true
+  "image": {
+    "image_list": "x/image1:latest x/image2:latest",
+    "update_strategy": "digest"
+  }
+}
+```
+
+To reactivate the application just remove this property or set it to `false`.  
+This configuration option is introduced with [this commit](https://github.com/PoliNetworkOrg/terraform/commit/8ddf6e984c802d823573e85f147d48a916556c7c).
+
+:::info
+In the git generator configuration the selector is set to `"false"` due to the limitations of `matchExpression`.  
+However, in the application's `config.json` you can set the `disabled` flag to either `false` or `"false"`.
+:::
