@@ -213,26 +213,26 @@ metadata:
   namespace: <namespace>
 spec:
   provider: azure
+  # add-highlight-start
+  secretObjects:
+    # each of these is a COLLECTION of secrets.
+    # multiple separate collections can be defined, but to identify Azure secrets from other k8s secrets,
+    # we use a collection that contains multiple secrets (as if it were an Object in fact).
+    # important: it only needs to be created the first time, then just add a key underneath
+    - secretName: azure-kv
+      type: Opaque
+      data:
+        # the secret that we want to expose also as k8s secret should be added here.
+        # important to distinguish objectName (reference to "KV") from key (custom name)
+        - objectName: <secret-1-key>      # secret name inside the "KV"
+          key: example-secret             # custom k8s secret's key
+  # add-highlight-end
   parameters:
     usePodIdentity: 'false'
     useVMManagedIdentity: 'true'                                   
     userAssignedIdentityID: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' 
     tenantId: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'               
     keyvaultName: 'kv-polinetwork'                                 
-    # add-highlight-start
-    secretObjects:
-      # each of these is a COLLECTION of secrets.
-      # multiple separate collections can be defined, but to identify Azure secrets from other k8s secrets,
-      # we use a collection that contains multiple secrets (as if it were an Object in fact).
-      # important: it only needs to be created the first time, then just add a key underneath
-      - secretName: azure-kv
-        type: Opaque
-        data:
-          # the secret that we want to expose also as k8s secret should be added here.
-          # important to distinguish objectName (reference to "KV") from key (custom name)
-          - objectName: <secret-1-key>      # secret name inside the "KV"
-            key: example-secret             # custom k8s secret's key
-    # add-highlight-end
     objects: |
       array:
         - |
@@ -428,18 +428,18 @@ metadata:
   namespace: test-secret-env
 spec:
   provider: azure
+  secretObjects:
+    - secretName: azure-kv
+      type: Opaque
+      data:
+        - objectName: <secret-key>
+          key: example-secret
   parameters:
     usePodIdentity: 'false'
     useVMManagedIdentity: 'true'                                   
     userAssignedIdentityID: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' 
     tenantId: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'               
     keyvaultName: 'kv-polinetwork'                                 
-    secretObjects:
-      - secretName: azure-kv
-        type: Opaque
-        data:
-          - objectName: <secret-key>
-            key: example-secret
     objects: |
       array:
         - |
