@@ -13,8 +13,9 @@ We run our infrastructure on Azure (paid with the
 If you want to learn how it works and how to add new services, check out the
 [Infrastructure](/docs/infrastructure/Introduction) section.
 
-## Polifemo
+## Archived Projects 🗃️
 
-This was an old app we wanted to build back when the official PoliMi app was
-not as good as it is now. We never finished it, but you can still check out
-the [Polifemo](/docs/app) section to see what we had in mind.
+In this section, you will find documentations for archived projects and repositories.
+These projects are no longer actively maintained or have been deprecated. However,
+the documentation is preserved for reference purposes and can be valuable for
+understanding past developments and decisions. [Have at it!](/docs/archive)
