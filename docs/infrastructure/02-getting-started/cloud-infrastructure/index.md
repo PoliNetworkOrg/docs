@@ -1,5 +1,5 @@
 ---
-title: Basic Knowledge
+title: Cloud Infrastructure
 ---
 import DocCardList from '@theme/DocCardList';
 
@@ -64,6 +64,9 @@ While Terraform is responsible for infrastructure, **PoliNetwork-CD** focuses on
 
 In summary, **Terraform builds the foundation on which applications run**, while **PoliNetwork-CD manages the deployment and continuous updating of applications**. Both repositories work together to ensure a scalable and efficient cloud infrastructure.
 
+<!-- markdownlint-disable-next-line -->
+<DocCardList />
+
 ## References
 
 ### **Links to Repositories**
@@ -76,6 +79,3 @@ In summary, **Terraform builds the foundation on which applications run**, while
 - [Kubernetes Documentation](https://kubernetes.io/docs/)
 - [Terraform Documentation](https://www.terraform.io/docs/)
 - [ArgoCD Documentation](https://argo-cd.readthedocs.io/en/stable/)
-
-<!-- markdownlint-disable-next-line -->
-<DocCardList />
