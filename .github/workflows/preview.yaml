@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Checkout PR head
-        if: ${{ startsWith(github.event_name, 'pull_request') }}
+        if: ${{ startsWith(github.event_name, 'pull_request') && github.event.action != 'closed'  }}
         uses: actions/checkout@v4
         with:
           ref: refs/pull/${{ github.event.pull_request.number }}/merge
@@ -35,8 +35,8 @@ jobs:
         uses: actions/setup-node@v4
         if: ${{ github.event.action != 'closed' }} # Skipping these steps if the PR has been closed
         with:
-          node-version-file: "package.json"
-        
+          node-version-file: 'package.json'
+
       - uses: pnpm/action-setup@v4
         with:
           version: 10
