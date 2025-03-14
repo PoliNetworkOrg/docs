@@ -76,8 +76,8 @@ const config: Config = {
         {
           type: 'docSidebar',
           position: 'left',
-          sidebarId: 'polifemo',
-          label: 'Polifemo (deprecated)',
+          sidebarId: 'archive',
+          label: 'Archived Projects 🗃️',
         },
         {
           href: 'https://github.com/polinetworkorg/docs',
@@ -101,8 +101,8 @@ const config: Config = {
               to: '/docs/infrastructure/Introduction',
             },
             {
-              label: 'Polifemo (deprecated)',
-              to: '/docs/app',
+              label: 'Archived Projects 🗃️',
+              to: '/docs/archive',
             },
           ],
         },
