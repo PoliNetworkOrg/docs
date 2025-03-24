@@ -1,3 +1,7 @@
+# inserisci.py
+
+```python
+
 import os
 import mysql.connector as database
 import json
@@ -42,7 +46,7 @@ with open("groups.json", 'r', encoding='cp850') as f:
             data[i]["id"] = json.dumps(data[i]["id"])
             data[i]["id_link"] = json.dumps(data[i]["id_link"])
                  
-            string = "INSERT IGNORE INTO gruppo VALUES ("+ data[i]["class"]  + ", '"+ data[i]["office"]  + "', "+ data[i]["id"]  + ", '"+ data[i]["degree"]  + "','"+ data[i]["school"]  + "',"+ data[i]["id_link"]  + ",'"+ data[i]["language"]  + "','"+ data[i]["type"]  + "', '"+ data[i]["year"]  + "', '"+ data[i]["platform"]  + "', '"+ data[i]["permanentId"]  + "', '"+ data[i]["LastUpdateInviteLinkTime"]  + "', '"+ data[i]["linkfunzionante"]  + "');";
+            string = "INSERT IGNORE INTO Groups VALUES ("+ data[i]["class"]  + ", '"+ data[i]["office"]  + "', "+ data[i]["id"]  + ", '"+ data[i]["degree"]  + "','"+ data[i]["school"]  + "',"+ data[i]["id_link"]  + ",'"+ data[i]["language"]  + "','"+ data[i]["type"]  + "', '"+ data[i]["year"]  + "', '"+ data[i]["platform"]  + "', '"+ data[i]["permanentId"]  + "', '"+ data[i]["LastUpdateInviteLinkTime"]  + "', '"+ data[i]["linkfunzionante"]  + "');";
             replace = string.replace("''", "NULL")
             cursor.execute(replace)
             connection.commit()
@@ -53,3 +57,4 @@ with open("groups.json", 'r', encoding='cp850') as f:
             print(f"string error: {e}")
             print(data[i]["class"])
         
+```

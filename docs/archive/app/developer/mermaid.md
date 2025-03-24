@@ -9,6 +9,7 @@ Per la documentazione tecnica si può usare Markdown in combinazione con mermaid
 
 Esempio:
 
+````markdown
 ```mermaid
 classDiagram
 
@@ -27,6 +28,7 @@ class Estensione {
 Estensione *-- Tipo
 Estensione <|-- Classe
 ```
+````
 
 Risultato:
 
