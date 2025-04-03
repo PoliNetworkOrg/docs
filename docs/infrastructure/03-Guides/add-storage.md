@@ -32,7 +32,6 @@ How much `Reserved` space is configured in the `Node` page, but at least 20-25 G
 :::
 
 Once you verified you have sufficient `Schedulable` space available, you can create the PVC in the k8s manifest:
-This is a basic `SecretProviderClass` manifest:
 
 ```yaml title="my-longhorn-example.yaml"
 # add-highlight-start
