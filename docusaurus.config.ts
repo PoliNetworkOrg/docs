@@ -149,6 +149,7 @@ const config: Config = {
     prism: {
       theme: materialThemes.darker,
       darkTheme: materialThemes.darker,
+      additionalLanguages: ['bash', 'ini'],
       magicComments: [
         {
           className: 'theme-code-block-highlighted-line',
