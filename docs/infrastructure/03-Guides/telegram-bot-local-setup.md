@@ -24,7 +24,7 @@ This guide walks through setting up both services locally for development.
 
 Postgres is required for the backend. You can run it in a Docker container:
 
-```powershell
+```sh
 docker run --name pn-backend-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=polinetwork_backend -p 5432:5432 -d postgres:15
 ```
 
@@ -36,7 +36,7 @@ The Telegram repo already contains a `docker-compose.yml` for Redis and InfluxDB
 
 From the repo root:
 
-```powershell
+```sh
 cd telegram
 docker compose up -d
 ```
@@ -53,7 +53,7 @@ Copy `backend/.env.example` to `backend/.env` and fill values.
 
 Required values for local dev:
 
-```env
+```ini
 DB_HOST=127.0.0.1
 DB_PORT=5432
 DB_USER=postgres
@@ -77,21 +77,21 @@ Generate the `ENCRYPTION_KEY` and `BETTER_AUTH_SECRET` values.
 
 If you have `openssl` installed:
 
-```powershell
+```sh
 openssl rand -hex 32
 openssl rand -hex 20
 ```
 
 Or with Python:
 
-```powershell
+```sh
 python -c "import os, binascii; print(binascii.hexlify(os.urandom(32)).decode())"
 python -c "import os, binascii; print(binascii.hexlify(os.urandom(20)).decode())"
 ```
 
 ### Install and run backend
 
-```powershell
+```sh
 cd backend
 bun install
 bun db:migrate
@@ -108,7 +108,7 @@ Copy `telegram/.env.example` to `telegram/.env` and fill values.
 
 Required values:
 
-```env
+```ini
 BOT_TOKEN=<telegram bot token>
 
 REDIS_HOST=127.0.0.1
@@ -122,7 +122,7 @@ INFLUXDB_URL=http://localhost:8086
 
 ### Install and run bot
 
-```powershell
+```sh
 cd telegram
 pnpm install
 pnpm run dev
