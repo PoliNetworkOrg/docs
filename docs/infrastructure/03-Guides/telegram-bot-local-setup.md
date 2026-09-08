@@ -183,6 +183,12 @@ Inspect:
 
 You can automate the local startup for Postgres, Redis, InfluxDB, the backend, and the bot by saving the following shell script and running it from a root directory containing the `telegram` and `backend` directories.
 
+Before running the script, export `REDIS_PASSWORD` with the password configured for Redis (the same value as `REDIS_PASSWORD` in `telegram/.env`):
+
+```bash
+export REDIS_PASSWORD='<your Redis password>'
+```
+
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
@@ -263,8 +269,15 @@ kill_process_on_port() {
 }
 
 # --- Environment Cleanup ---
-echo "Cleaning up local ports..."
-kill_process_on_port 3000
+if wait_for_port 127.0.0.1 3000 1; then
+  read -r -p "Port 3000 is in use. Force-kill its process before starting the backend? [y/N] " confirm
+  if [[ "$confirm" =~ ^[Yy]$ ]]; then
+    kill_process_on_port 3000
+  else
+    echo "Port 3000 is still in use. Stop the existing process and run this script again." >&2
+    exit 1
+  fi
+fi
 
 # --- Infrastructure Setup ---
 echo "Starting Postgres container..."
@@ -286,28 +299,36 @@ popd >/dev/null
 
 echo "Waiting for Docker services to be reachable..."
 if ! wait_for_port 127.0.0.1 5432 60; then
-  echo "Warning: Postgres not responding on 127.0.0.1:5432" >&2
+  echo "Error: Postgres not responding on 127.0.0.1:5432" >&2
+  exit 1
 fi
 if ! wait_for_port 127.0.0.1 6379 60; then
-  echo "Warning: Redis not responding on 127.0.0.1:6379" >&2
+  echo "Error: Redis not responding on 127.0.0.1:6379" >&2
+  exit 1
 fi
 if ! wait_for_http http://127.0.0.1:8086/health 60; then
-  echo "Warning: InfluxDB not responding on http://127.0.0.1:8086/health" >&2
+  echo "Error: InfluxDB not responding on http://127.0.0.1:8086/health" >&2
+  exit 1
 fi
 
 echo "Waiting for Redis initialization..."
+if [ -z "${REDIS_PASSWORD:-}" ]; then
+  echo "Error: REDIS_PASSWORD must be set before running this script." >&2
+  exit 1
+fi
 REDIS_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'redis_db' | head -n 1 || true)
 if [ -z "$REDIS_CONTAINER" ]; then
   REDIS_CONTAINER="redis_db"
 fi
 
 for i in {1..60}; do
-  if docker exec "$REDIS_CONTAINER" redis-cli -a {your_redis_password} ping >/dev/null 2>&1; then
+  if docker exec "$REDIS_CONTAINER" redis-cli -a "$REDIS_PASSWORD" ping >/dev/null 2>&1; then
     break
   fi
   sleep 1
   if [ "$i" -eq 60 ]; then
-    echo "Warning: Redis ping did not succeed after 60 seconds" >&2
+    echo "Error: Redis ping did not succeed after 60 seconds" >&2
+    exit 1
   fi
 done
 
@@ -327,7 +348,8 @@ cd "$SCRIPT_ROOT"
 
 echo "Waiting for backend HTTP endpoint http://localhost:3000/ to respond..."
 if ! wait_for_http http://localhost:3000/ 60; then
-  echo "Warning: Backend did not respond on http://localhost:3000 within timeout" >&2
+  echo "Error: Backend did not respond on http://localhost:3000 within timeout" >&2
+  exit 1
 fi
 
 echo "Preparing bot dependencies..."
