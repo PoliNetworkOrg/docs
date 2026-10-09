@@ -11,24 +11,50 @@ Let's discover **PoliNetwork's Infrastructure in less than 5 minutes**.
 ### Where
 
 Our infrastructure is deployed on Azure West Europe (Amsterdam).
-The description is found [here](https://github.com/polinetworkorg/terraform), described in Terraform (IaC).
+The Azure resources are described in Terraform (IaC) in the
+[terraform](https://github.com/polinetworkorg/terraform) repository.
 
 ### What
 
-The core is a AKS Cluster (Kubernetes), in combination with various other services (KeyVault, Disks, Azure Active Directory, ...)
+Production runs on **K3s**, a lightweight Kubernetes distribution, installed on
+a single Azure ARM64 VM called `k3s01`. Around it there are a few Azure services
+(Key Vault, Managed Disks, Blob Storage, Entra ID) and Cloudflare, which
+publishes our websites through a tunnel and gives us SSH access to the VM.
+
+Three layers, three tools:
+
+| Layer | Tool | Repository |
+|-------|------|------------|
+| Azure resources (VM, disks, network, Key Vaults, identities) | Terraform | [terraform](https://github.com/polinetworkorg/terraform) |
+| The VM itself (disks, firewall, K3s, backups) | Ansible | [polinetwork-cd/ansible](https://github.com/polinetworkorg/polinetwork-cd/tree/main/ansible) |
+| Everything running inside Kubernetes | Flux (GitOps) | [polinetwork-cd](https://github.com/polinetworkorg/polinetwork-cd) |
 
 ### Why
 
-Why not a simple VM?
-AKS gives us the flexibility of a 10s pod deployment, reliability (with ArgoCD ensuring all pods are up and running all the time) and allows us to be more precise and clean in our infrastructure, with better monitoring and allocated resources for each application depending on the importance.  
+Why Kubernetes on a single VM instead of plain Docker?
+Kubernetes gives us declarative deployments, rolling updates, health checks and
+per-application resource limits. Flux keeps the cluster in sync with Git, so the
+`polinetwork-cd` repository is always the source of truth for what is running.
+
+Why K3s instead of a managed cluster?
+Until October 2026 we ran on AKS (Azure Kubernetes Service). K3s gives us the
+same Kubernetes API on one VM that we fully control and size ourselves, and it
+drops our dependency on AKS-specific add-ons (Azure CSI drivers, Longhorn, ArgoCD).
+
+:::note Legacy AKS
+The AKS cluster `aks-polinetwork` is still defined in the `environments/legacy`
+Terraform root, but no production workload runs on it anymore.
+If you find instructions mentioning `az aks get-credentials`, ArgoCD,
+`SecretProviderClass` or Longhorn (e.g. in old READMEs), they refer to the AKS setup.
+:::
 
 ## About this documentation
 
 :::important
-Most of the docs explain procedures with the Azure CLI and the Kubernetes CLI.  
-Make sure to [install and configure them](./getting-started/setup#azure-cli--kubectl) to follow along.  
-Alternatively, you can see the [official Azure documentation](https://learn.microsoft.com/en-us/azure/?product=popular) for how to use the Azure portal.
+Most of the docs explain procedures with `kubectl`, which you run on the K3s node
+over SSH, and with the Azure CLI, which you use for Key Vault secrets.
+Make sure to [set up your access](./getting-started/setup) to follow along.
 :::
 
 The best place to start is going through the [Getting Started](./getting-started/setup) section to get a high level overview of how things are organized.  
-If you're looking for a guide on how to achieve a specific outcome, you can look in the [Guides](./Guides/add-a-new-secret).
+If you're looking for a guide on how to achieve a specific outcome, you can look in the [Guides](./Guides/deploy-a-new-app).

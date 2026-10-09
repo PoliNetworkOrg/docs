@@ -9,49 +9,74 @@ This section explains how we organized our infrastructure.
 
 Everything regarding the deployment of apps and services is divided into two repositories:
 
-- [polinetworkorg/terraform](https://github.com/polinetworkorg/terraform) - Contains the Terraform code to deploy the infrastructure. This defines the resources that are created on Azure, from specific things like KeyVaults, Disks, and VMs, to the Kubernetes cluster itself.
-- [polinetworkorg/polinetwork-cd](https://github.com/polinetworkorg/polinetwork-cd) - Our GitOps repo, contains the manifests that define deployments specific for each app or service. This repository is connected to the ArgoCD instance running on the Kubernetes cluster.
+- [polinetworkorg/terraform](https://github.com/polinetworkorg/terraform) - Contains the Terraform code for the Azure resources: the `k3s01` VM, its disks and network, the Key Vaults, the managed identities, the backup storage account.
+- [polinetworkorg/polinetwork-cd](https://github.com/polinetworkorg/polinetwork-cd) - Our GitOps repo. It contains the Ansible playbooks that turn the VM into a K3s node, and the Kubernetes manifests of every app and service. Flux, running in the cluster, applies them.
 
 ```mermaid
 flowchart TD
   subgraph Github
     tf([**terraform**])
     cd([**polinetwork-cd**])
+    ghcr[(GHCR images)]
+  end
+  subgraph Cloudflare
+    edge[Tunnel + Access]
   end
   subgraph Azure
-    vm[VMs and other resources]
-    subgraph k8s[K8S cluster]
-      argocd[ArgoCD]
-      app@{ shape: processes, label: "Apps / Services" }
+    kv[(Key Vaults)]
+    blob[(Backup storage)]
+    subgraph vm[VM k3s01]
+      subgraph k3s[K3s cluster]
+        flux[Flux]
+        eso[External Secrets]
+        cfd[cloudflared]
+        traefik[Traefik]
+        app@{ shape: processes, label: "Apps / Services" }
+      end
     end
   end
 
   tf -.-> vm
-  tf -.-> k8s
-  vm <--> k8s
-  cd <-.-> argocd --> app
+  tf -.-> kv
+  cd -. Ansible .-> vm
+  cd <-.-> flux --> app
+  ghcr -. image digests .-> flux
+  kv --> eso --> app
+  edge <--> cfd --> traefik --> app
+  vm -. backups .-> blob
 ```
 
 ### **Terraform: Definition and Purpose**  
 
 The **Terraform** repository is responsible for managing and provisioning cloud infrastructure. In simple terms, it defines and creates the resources needed for the infrastructure, such as:  
 
-- **Networks and subnets** (Virtual Networks, Subnets, Security Groups)
-- **Virtual machines** (VMs, Containers, Kubernetes Clusters)
-- **Databases** (MariaDB, PostgreSQL)
-- **Storage** (Blob Storage, Virtual Disks, File Shares)
-- **Security services** (Identity and Access Management, Firewalls)
+- **Networks and subnets** (Virtual Network, NAT Gateway for outbound traffic, Network Security Group)
+- **Virtual machines** (the `k3s01` K3s node)
+- **Storage** (Managed Disks for the node, Blob Storage for backups and Terraform state)
+- **Security services** (Key Vaults, managed identities, workload identity federation)
 
 The code in **Terraform** describes these resources declaratively: it defines the desired state, and Terraform applies the necessary changes to reach that state. This repository is primarily used to **create and modify the cloud infrastructure** where applications will run.
 
+Terraform stops at the Azure boundary: it creates the VM, but it doesn't configure
+what runs inside it.
+
 ### **PoliNetwork-CD: Definition and Purpose**  
 
-The **PoliNetwork-CD** (Continuous Deployment) repository, on the other hand, is dedicated to managing and updating applications once the infrastructure has been created. Specifically, it uses **GitOps** tools (in our case, **ArgoCD**, but **Flux** is also an opinionated option) to:  
+The **PoliNetwork-CD** (Continuous Deployment) repository picks up where Terraform stops. It has two parts:
 
-- **Define application deployments** in Kubernetes (or Kustomize, Helm, etc.)
-- **Automatically update applications** when code changes  
-- **Manage application configurations** (e.g., configuration files, environment variables)  
-- **Monitor the state of applications** and ensure they remain in sync with the repository  
+- **`ansible/`** configures the VM: it mounts the data disks, hardens SSH and the
+  firewall, installs a pinned K3s version, schedules the encrypted backups and
+  bootstraps Flux. You run it by hand, rarely.
+- **`clusters/k3s/`, `infrastructure/` and `apps/`** describe everything inside
+  Kubernetes. **Flux** watches the `main` branch and applies it continuously, so you
+  never run `kubectl apply` by hand.
+
+Through Flux, the repository is used to:
+
+- **Define application deployments** in Kubernetes (plain manifests organized with Kustomize, or Helm charts)
+- **Automatically update applications** when a new `latest` image is published
+- **Manage application configurations** (environment variables, secrets pulled from Key Vault)
+- **Monitor the state of applications** and ensure they remain in sync with the repository
 
 While Terraform is responsible for infrastructure, **PoliNetwork-CD** focuses on **managing the lifecycle of applications** running on that infrastructure, ensuring that code changes are applied automatically and securely.  
 
@@ -59,10 +84,23 @@ While Terraform is responsible for infrastructure, **PoliNetwork-CD** focuses on
 
 | Repository | Main Purpose | Example of Managed Resources |
 |------------|--------------|------------------------------|
-| **Terraform** | Creates and manages cloud infrastructure | Networks, VMs, databases, storage, security |
-| **PoliNetwork-CD** | Automates application deployment and updates | Deployments, configurations, GitOps updates |
+| **Terraform** | Creates and manages cloud infrastructure | VM, disks, network, Key Vaults, identities |
+| **PoliNetwork-CD** (`ansible/`) | Configures the VM | Disk mounts, firewall, SSH, K3s, backups |
+| **PoliNetwork-CD** (Flux) | Automates application deployment and updates | Deployments, ingresses, secrets, storage |
 
-In summary, **Terraform builds the foundation on which applications run**, while **PoliNetwork-CD manages the deployment and continuous updating of applications**. Both repositories work together to ensure a scalable and efficient cloud infrastructure.
+In summary, **Terraform builds the foundation on which applications run**, while **PoliNetwork-CD sets up the node and manages the deployment and continuous updating of applications**. Both repositories work together to ensure a scalable and efficient cloud infrastructure.
+
+### How a request reaches an app
+
+1. A visitor opens e.g. `https://api.polinetwork.org`. DNS points to Cloudflare.
+2. Cloudflare sends the request through the `k3s01` tunnel to one of the two
+   `cloudflared` pods in the cluster.
+3. `cloudflared` forwards it to **Traefik**, the K3s ingress controller.
+4. Traefik picks the app from the `Ingress` whose `host` matches, and forwards the
+   request to that app's `Service`.
+
+The VM never accepts inbound connections from the Internet: the tunnel is an
+outbound connection, and outbound traffic leaves Azure through a NAT Gateway.
 
 <!-- markdownlint-disable-next-line -->
 <DocCardList />
@@ -77,5 +115,6 @@ In summary, **Terraform builds the foundation on which applications run**, while
 ### **Additional Resources**
 
 - [Kubernetes Documentation](https://kubernetes.io/docs/)
+- [K3s Documentation](https://docs.k3s.io/)
+- [Flux Documentation](https://fluxcd.io/flux/)
 - [Terraform Documentation](https://www.terraform.io/docs/)
-- [ArgoCD Documentation](https://argo-cd.readthedocs.io/en/stable/)
