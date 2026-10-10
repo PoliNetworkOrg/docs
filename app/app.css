@@ -1,0 +1,104 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+/* the spacious layout (docs pages) isn't part of the preset */
+@import 'fumadocs-ui/css/generated/spacious.css';
+
+/*
+ * Theme derived from the PoliNetwork blue #1156ae, oklch(0.466 0.155 257.4):
+ * every neutral carries a little of its hue.
+ */
+@theme {
+  --color-fd-background: oklch(0.985 0.004 257);
+  --color-fd-foreground: oklch(0.21 0.03 257);
+  --color-fd-muted: oklch(0.955 0.01 257);
+  --color-fd-muted-foreground: oklch(0.5 0.025 257);
+  --color-fd-popover: oklch(0.995 0.002 257);
+  --color-fd-popover-foreground: oklch(0.21 0.03 257);
+  --color-fd-card: oklch(0.97 0.008 257);
+  --color-fd-card-foreground: oklch(0.21 0.03 257);
+  --color-fd-border: oklch(0.88 0.018 257 / 70%);
+  --color-fd-primary: #1156ae;
+  --color-fd-primary-foreground: oklch(0.99 0.003 257);
+  --color-fd-secondary: oklch(0.95 0.012 257);
+  --color-fd-secondary-foreground: oklch(0.21 0.03 257);
+  --color-fd-accent: oklch(0.92 0.03 257 / 60%);
+  --color-fd-accent-foreground: oklch(0.3 0.08 257);
+  --color-fd-ring: oklch(0.466 0.155 257.4 / 50%);
+}
+
+/* the dark primary is lighter, so links stay readable on the dark background */
+.dark {
+  --color-fd-background: oklch(0.16 0.012 257);
+  --color-fd-foreground: oklch(0.94 0.008 257);
+  --color-fd-muted: oklch(0.22 0.015 257);
+  --color-fd-muted-foreground: oklch(0.7 0.02 257);
+  --color-fd-popover: oklch(0.2 0.015 257);
+  --color-fd-popover-foreground: oklch(0.92 0.008 257);
+  --color-fd-card: oklch(0.19 0.014 257);
+  --color-fd-card-foreground: oklch(0.94 0.008 257);
+  --color-fd-border: oklch(0.42 0.03 257 / 35%);
+  --color-fd-primary: oklch(0.68 0.14 257);
+  --color-fd-primary-foreground: oklch(0.16 0.03 257);
+  --color-fd-secondary: oklch(0.23 0.016 257);
+  --color-fd-secondary-foreground: oklch(0.94 0.008 257);
+  --color-fd-accent: oklch(0.36 0.06 257 / 40%);
+  --color-fd-accent-foreground: oklch(0.93 0.02 257);
+  --color-fd-ring: oklch(0.68 0.14 257 / 60%);
+}
+
+.dark #nd-sidebar {
+  --color-fd-muted: oklch(0.24 0.016 257);
+  --color-fd-secondary: oklch(0.25 0.018 257);
+  --color-fd-muted-foreground: oklch(0.72 0.02 257);
+}
+
+::selection {
+  background-color: color-mix(in oklab, var(--color-fd-primary) 25%, transparent);
+}
+
+/* `[!code error]` lines */
+.shiki .highlighted.error {
+  --fd-counter-color: var(--color-red-500);
+  background-color: color-mix(in oklab, var(--color-red-500) 12%, transparent);
+}
+
+.shiki .highlighted.error::after {
+  border-color: color-mix(in oklab, var(--color-red-500) 60%, transparent);
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+/* Fumadocs callouts, tinted with their --callout-color */
+.callout {
+  background-color: color-mix(in oklab, var(--callout-color) 8%, var(--color-fd-card));
+  border-color: color-mix(in oklab, var(--callout-color) 35%, transparent);
+}
+
+.dark .callout {
+  background-color: color-mix(in oklab, var(--callout-color) 12%, var(--color-fd-card));
+}
+
+.callout > [role='none'] {
+  background-color: var(--callout-color);
+}
+
+.callout > div > p:first-child {
+  color: color-mix(in oklab, var(--callout-color) 70%, var(--color-fd-foreground));
+}
+
+.callout > div > div {
+  color: color-mix(in oklab, var(--color-fd-foreground) 85%, transparent);
+}
+
+.callout :not(pre) > code {
+  background-color: color-mix(in oklab, var(--callout-color) 12%, transparent);
+  border-color: color-mix(in oklab, var(--callout-color) 25%, transparent);
+}

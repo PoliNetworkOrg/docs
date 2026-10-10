@@ -2,73 +2,54 @@
   "name": "docs",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "docusaurus": "docusaurus",
-    "start": "docusaurus start",
-    "dev": "pnpm run start",
-    "build": "docusaurus build",
-    "swizzle": "docusaurus swizzle",
-    "deploy": "docusaurus deploy",
-    "clear": "docusaurus clear",
-    "serve": "docusaurus serve",
-    "write-translations": "docusaurus write-translations",
-    "write-heading-ids": "docusaurus write-heading-ids",
-    "typecheck": "tsc",
+    "dev": "react-router dev",
+    "build": "react-router build && node scripts/postbuild.mjs",
+    "start": "serve ./build",
+    "typecheck": "react-router typegen && tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@docusaurus/core": "3.7.0",
-    "@docusaurus/faster": "^3.7.0",
-    "@docusaurus/preset-classic": "3.7.0",
-    "@docusaurus/theme-mermaid": "^3.7.0",
-    "@easyops-cn/docusaurus-search-local": "^0.48.5",
-    "@mdx-js/react": "^3.0.0",
-    "clsx": "^2.0.0",
-    "prism-react-renderer": "^2.3.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "@react-router/node": "^8.4.0",
+    "fumadocs-core": "16.17.1",
+    "fumadocs-mdx": "15.4.7",
+    "fumadocs-ui": "npm:@fumadocs/base-ui@16.17.1",
+    "isbot": "^5.2.2",
+    "lucide-react": "^1.55.0",
+    "mermaid": "^12.1.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router": "^8.4.0"
   },
   "devDependencies": {
-    "@docusaurus/module-type-aliases": "3.7.0",
-    "@docusaurus/tsconfig": "3.7.0",
-    "@docusaurus/types": "3.7.0",
-    "@eslint/eslintrc": "^3.3.0",
     "@eslint/js": "^9.21.0",
+    "@react-router/dev": "^8.4.0",
+    "@shikijs/transformers": "^4.5.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/mdx": "^2.0.14",
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "eslint": "^9.21.0",
     "eslint-config-prettier": "^10.0.2",
     "eslint-plugin-react": "^7.37.4",
     "globals": "^16.0.0",
-    "typescript": "~5.6.2",
-    "typescript-eslint": "^8.25.0"
-  },
-  "browserslist": {
-    "production": [
-      ">0.5%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 3 chrome version",
-      "last 3 firefox version",
-      "last 5 safari version"
-    ]
+    "serve": "^14.2.6",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.1",
+    "vite": "^8.3.2"
   },
   "engines": {
     "node": ">=22.14",
     "pnpm": ">=10"
   },
   "pnpm": {
-    "ignoredBuiltDependencies": [
-      "@swc/core",
-      "core-js",
-      "core-js-pure"
-    ],
     "onlyBuiltDependencies": [
-      "@swc/core",
-      "core-js",
-      "core-js-pure"
+      "esbuild"
     ]
   }
 }
