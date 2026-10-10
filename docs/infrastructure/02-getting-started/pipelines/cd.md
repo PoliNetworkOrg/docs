@@ -2,9 +2,15 @@
 sidebar_position: 2
 ---
 ## Continuous Delivery
-Following the [Bot Pipeline](https://github.com/PoliNetworkOrg/PoliNetworkBot_CSharp/blob/master/.github/workflows/ci-cd.yaml) we deploy the built Docker Image in our [Docker Hub registry](https://hub.docker.com/u/polinetwork).
-We currently have 2 environments, dev and prod on the dev and main branch respectively.
-Finally we update [these](https://github.com/polinetworkorg/polinetwork-cd) k8s (Kubernetes) deployment files. 
+Each app repository builds its Docker image and publishes it to [GHCR](https://github.com/orgs/PoliNetworkOrg/packages) with the `latest` tag (see [CI](./ci.md)).
+That's where the app pipeline stops: it doesn't touch the [polinetwork-cd](https://github.com/polinetworkorg/polinetwork-cd) repository.
+
 ## Continuous Deployment
-We rely on ArgoCD to deploy our pods following the manifest present in the polinetwork-cd repository, as specified [here in the terraform deployment code](https://github.com/PoliNetworkOrg/terraform/blob/main/argocd-applications.yaml).
-ArgoCD works by ensuring 0 downtime (by monitoring continuously all the deployed pods) and checking for changes on the polinetwork-cd repository (which is updated by the various pipeline whenever a change is pushed to the registry) ensuring fast deployment of fixes and changes in dev and prod environments.
+We rely on [Flux](../cloud-infrastructure/03-flux.md) to deploy our pods following the manifests in the `main` branch of polinetwork-cd.
+Flux continuously compares the cluster with the repository and applies any difference, so a merged PR in polinetwork-cd reaches production within minutes.
+
+New images don't need a commit: when a new `latest` image is published, GitHub calls a Flux webhook, Flux resolves `latest` to the new image digest and rolls out the deployment.
+If the webhook is missed, Flux checks for new images every 6 hours anyway.
+
+Our deployments use rolling updates with `maxUnavailable: 0`: Kubernetes starts the new pod, waits for its readiness probe, and only then stops the old one, so a broken image doesn't take the app down.
+Stateful services (databases, Redis, Grafana) use the `Recreate` strategy instead, because only one pod at a time can write to their volume.

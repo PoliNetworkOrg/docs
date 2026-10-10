@@ -6,13 +6,20 @@ Keep in mind that the aim of this guide is not to provide a complete overview of
 
 ## Tools needed
 If you want to monitor or make changes to the pods:
-- Azure Cli
+- Cloudflare WARP and an SSH client (`kubectl` runs on the node)
+
+If you want to manage secrets:
+- Azure CLI
 
 If you want to make changes to the infrastructure:
 - Terraform
 - [Pre-Commits](https://github.com/antonbabenko/pre-commit-terraform)
+- Ansible, only for changes to the node itself
 
 ## Configure the tools
+- Connect WARP to PoliNetwork's Cloudflare Zero Trust organization
+- SSH into the node with ```ssh pnadmin@10.43.1.4```
+- Run kubectl as ```k3s kubectl``` (or add the alias ```alias kubectl='k3s kubectl'```)
 - Login in Azure CLI using az login
-- Install Kubectl and Kubelogin by running ```sudo az aks install-cli```
-- Configure Kubectl using ```az aks get-credentials --resource-group rg-polinetwork --name aks-polinetwork```
+
+The full procedure is in [Setup](../setup.md).

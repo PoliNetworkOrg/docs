@@ -4,206 +4,365 @@ title: Deploy a New App
 
 ## Introduction
 
-We use k8s to deploy our applications.  
-You can choose, based on your needs, to use basic k8s manifests, [Kustomize](https://kustomize.io/) or [Helm Charts](https://helm.sh/docs/topics/charts/).
+We use k8s to deploy our applications, on our [K3s node](../02-getting-started/cloud-infrastructure/02-k3s-node.md).  
+Each app is a folder of plain k8s manifests in the
+[polinetwork-cd](https://github.com/PoliNetworkOrg/polinetwork-cd/) repository, tied
+together with [Kustomize](https://kustomize.io/). [Helm Charts](https://helm.sh/docs/topics/charts/)
+are possible too, through a Flux `HelmRelease` (see `infrastructure/external-secrets` for an example).
 
-If you have access to PoliNetwork's k8s cluster (you can perform `kubectl` commands) you can directly deploy from your machine.  
-Although, this is not recommended in a production environment.  
-Check [minikube](https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download) to install a k8s cluster in your machine for testing purposes.
+You don't deploy from your machine: you open a PR, and once it's merged into `main`,
+Flux applies it.  
+Check [minikube](https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download) or [K3s](https://docs.k3s.io/quick-start) to run a k8s cluster on your machine for testing purposes.
 
 :::note CD
-To deploy our applications, we use [ArgoCD](https://argo-cd.readthedocs.io/en/stable/) 
-with a [Git File Generator](https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Generators-Git/#git-generator-files) 
-pointing to the [polinetwork-cd](https://github.com/PoliNetworkOrg/polinetwork-cd/) GitHub repo.
+To deploy our applications, we use [Flux](https://fluxcd.io/flux/) syncing the
+`clusters/k3s` folder of the `main` branch of
+[polinetwork-cd](https://github.com/PoliNetworkOrg/polinetwork-cd/).
 
-For more info, check out *[Getting Started / Basic Knowledge]*
+For more info, check out [Flux](../02-getting-started/cloud-infrastructure/03-flux.md).
 :::
 
 ## Procedure
 
-1. Deploy a [Docker image](https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-an-image/)
-2. [Create the app structure](#create-the-app-structure)
-3. Open a PR into polinetwork-cd
-4. Monitor deploy on ArgoCD
+1. Publish a [Docker image](https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-an-image/) with an **`arm64`** variant
+2. [Create the app folder](#create-the-app-folder)
+3. [Register the app with Flux](#register-the-app-with-flux)
+4. Optionally, [publish it on a domain](#publish-it-on-a-domain), [add secrets](./add-a-new-secret.md), [add storage](./add-storage.md) and [enable automatic image updates](#automatic-image-updates)
+5. Open a PR into polinetwork-cd, wait for CI, merge
+6. Monitor the deploy on the [Flux Web UI](https://flux.polinetwork.org)
 
-### Create the app structure
+:::important ARM64 images
+The node is ARM64. An image built only for `amd64` can't run there, and the pod fails
+with `exec format error`. Build a multi-arch image (see the
+[web workflow](https://github.com/PoliNetworkOrg/web/blob/main/.github/workflows/docker.yml)
+for an example), or check that the third-party image you use publishes `linux/arm64`.
+:::
+
+### Create the app folder
 This is the crucial part, so make sure to follow it step-by-step.
 1. Clone [polinetwork-cd](https://github.com/PoliNetworkOrg/polinetwork-cd) repo
 2. Create a new branch (named as you like, e.g. `mc-server-deploy`)
 3. Create this minimal file structure:
 ```
-🗀 <k8s-namespace>
-├─ 🗀 src
-│  └── deployment.yaml
-│ 
-└─ config.json
+🗀 apps
+└─ 🗀 <k8s-namespace>
+   ├── kustomization.yaml
+   ├── namespace.yaml
+   └── deployment.yaml
 ```
 
 :::info
 The `<k8s-namespace>` should be a slug (lowercase words separated by hyphens) identifier of the application/service you want to deploy.  
-You can append, if necessary, an enviornment tag (e.g. `app-dev`, `app-prod`).  
 
-Make sure that you use the same `<k8s-namespace>` value for both:
-- folder name
-- namespace field in k8s resources
-:::
- 
-Inside `src/` you can put one of the following:
-- base k8s manifest ([example](https://raw.githubusercontent.com/kubernetes/website/main/content/en/examples/controllers/nginx-deployment.yaml))
-- [Kustomize](https://kubectl.docs.kubernetes.io/guides/introduction/kustomize/)
-- [Helm Chart](https://helm.sh/docs/topics/charts/)
-
-How these build tools are detected and distinguished is described [here](https://argo-cd.readthedocs.io/en/stable/user-guide/tool_detection/#tool-detection).
-
-:::important
-If you would like to use the Docker Image Auto-Updater, base k8s manifests are not supported, you must choose between Kustomize and Helm Chart.
-
-For more info, check the [relative section](#docker-image-auto-updater).
+Use the same `<k8s-namespace>` value for the folder name, the `Namespace` resource and
+the `namespace` field of `kustomization.yaml`. You don't need to write the namespace in
+the other manifests: Kustomize adds it.
 :::
 
-## Docker Image Auto-Updater
-We use [ArgoCD Image Updater](https://argocd-image-updater.readthedocs.io/en/stable/) to 
-automatically update docker images in deployments.  
-This is an optional feature, but the alternative is to use a docker image fixed version (e.g. `nginx:1.27.4`).  
-
-We use the `digest` strategy by default (also the only one we documented so far).  
-Check out [the other strategies available](https://argocd-image-updater.readthedocs.io/en/stable/basics/update-strategies/).
-
-As mentioned in the [section above](#create-the-app-structure), you must use Kustomize or Helm Charts.
-
-:::warning
-Consider the following manifest:
-```yaml
-kind: Pod
-apiVersion: v1
-metadata:
-  name: example-pod
-  namespace: test
-spec:
-  containers:
-    - name: nginx
-      image: nginx:latest
-```
-the image would **not update** if you **don't follow** this guide, even though there is `latest`.
-:::
-
-### Digest with Kustomize
-- [Full example](https://github.com/PoliNetworkOrg/polinetwork-cd/tree/main/tests/docker-test)
-
-In this configuration, we are using a Kustomize deployment with `digest` strategy.  
-These are the steps to follow: (we are using `toto04/testcontainer` as the docker image)
-
-1. Create a `src/kustomization.yaml` with this content:
-```yaml
+```yaml title="apps/<k8s-namespace>/kustomization.yaml"
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
+namespace: <k8s-namespace>
+
 resources:
-- deployment.yaml
+  - namespace.yaml
+  - deployment.yaml
 ```
 
-2. As declared in the `resources` field above, we need a k8s manifest `src/deployment.yaml`.  
-Create it and set the `spec.containers[x].image` field as a fixed digest, example:
-```yaml
-spec:
-  containers:
-  - name: docker-test-pod
-    image: toto04/testcontainer@sha256:b5ec2efcc11e90c2fd955cd1c01f3fdf7c2f18c77c213360addcd37be7e8f2f3
-```
-
-:::tip
-If you are using Docker Hub, you can find a digest going to the image homepage ([example](https://hub.docker.com/r/toto04/testcontainer/tags))
-under the tag you want to use (e.g. `latest`)
-:::
-
-3. In the `config.json` file set the image(s) to automatically update:
-```yaml
-  "image": {
-    "image_list": "toto04/testcontainer:latest",
-    "update_strategy": "digest"
-  }
-```
-
-In this configuration, the image `toto04/testcontainer` would be automatically updated following the tag `latest`.
-
-
-
-:::tip
-You can also specify multiple images to update:
-```yaml title="config.json"
-  "image": {
-# add-highlight-start
-    "image_list": "x/image1:latest x/image2:latest",
-# add-highlight-end
-    "update_strategy": "digest"
-  }
-```
-
-```yaml title="src/deployment.yaml"
-apiVersion: apps/v1
-kind: Deployment
+```yaml title="apps/<k8s-namespace>/namespace.yaml"
+apiVersion: v1
+kind: Namespace
 metadata:
-  name: deploy-1
-  namespace: <k8s-namespace>
+  name: <k8s-namespace>
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+```
+
+The `prune: disabled` annotation keeps Flux from deleting the namespace, and with it
+everything inside, if the app is removed from Git by mistake.
+
+```yaml title="apps/<k8s-namespace>/deployment.yaml"
+apiVersion: v1
+kind: Service
+metadata:
+  name: <app>-service
 spec:
-  replicas: 1
   selector:
-    matchLabels:
-      app: app-1
-  template:
-    metadata:
-      labels:
-        app: app-1
-    spec:
-      containers:
-      - name: app-1-pod
-# add-highlight-start
-        image: x/image1@sha256:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-# add-highlight-end
+    app: <app>
+  ports:
+    - name: http
+      port: <port>
+      targetPort: <port>
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: deploy-2
-  namespace: <k8s-namespace>
+  name: <app>
 spec:
-  replicas: 2
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0   # keep the old pod until the new one is ready
+      maxSurge: 1
   selector:
     matchLabels:
-      app: app-2
+      app: <app>
   template:
     metadata:
       labels:
-        app: app-2
+        app: <app>
     spec:
       containers:
-      - name: app-2-pod
-# add-highlight-start
-        image: x/image2@sha256:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-# add-highlight-end
+        - name: <app>
+          image: ghcr.io/polinetworkorg/<image>:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: <port>
+          readinessProbe:
+            tcpSocket:
+              port: <port>
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: <port>
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
 ```
+
+A few rules we follow for every app:
+
+- **Requests and limits.** Everything shares one node, so every container declares
+  its memory request and limit. Base the numbers on what the app actually uses
+  (`kubectl top pods`).
+- **Probes.** The readiness probe is what makes rolling updates safe: without it,
+  Kubernetes kills the old pod before the new one is serving.
+- **Apps with a volume** use `strategy: Recreate` instead (see [Add Storage](./add-storage.md)).
+- Apps talk to each other through their Service:
+  `http://<service>.<namespace>.svc.cluster.local:<port>`.
+
+### Register the app with Flux
+
+Flux only deploys the apps listed in `clusters/k3s/apps/`. Create a Flux
+`Kustomization` for the app:
+
+```yaml title="clusters/k3s/apps/<k8s-namespace>.yaml"
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: <k8s-namespace>
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: infrastructure-secret-stores
+    - name: infrastructure-storage
+    - name: infrastructure-traefik
+  interval: 30m
+  retryInterval: 1m
+  timeout: 5m
+  prune: true
+  wait: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./apps/<k8s-namespace>
+```
+
+If the app needs another app to be up first (e.g. a database), add it to
+`dependsOn` (e.g. `- name: postgres`).
+
+Then add it to the list:
+
+```yaml title="clusters/k3s/apps/kustomization.yaml"
+resources:
+  - admin.yaml
+  ...
+  # add-highlight-next-line
+  - <k8s-namespace>.yaml
+```
+
+If you want automatic image updates, write a `ResourceSet` instead of this
+`Kustomization`: see [below](#automatic-image-updates).
+
+### Publish it on a domain
+
+Public traffic arrives through the Cloudflare Tunnel to Traefik, which routes it by
+hostname. Two things are needed.
+
+1. An `Ingress` in the app folder (and in `kustomization.yaml`):
+
+```yaml title="apps/<k8s-namespace>/ingress.yaml"
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: <app>
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: <hostname>.polinetwork.org
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: <app>-service
+                port:
+                  number: <port>
+```
+
+2. A public hostname on the **`k3s01`** tunnel in the Cloudflare Zero Trust dashboard
+   (*Networks → Tunnels*), pointing to Traefik like the existing hostnames. The tunnel
+   is managed from the dashboard, not from Git, so ask someone in the Direttivo to add it.
+
+Cloudflare terminates HTTPS, so the `Ingress` only needs the plain `web` entrypoint:
+no certificates in the cluster.
+
+## Automatic image updates
+Flux can redeploy the app every time a new `latest` image is published, pinning the
+image digest (see [how it works](../02-getting-started/cloud-infrastructure/03-flux.md#automatic-image-updates)).  
+This is an optional feature: the alternative is a fixed version or digest in
+`deployment.yaml` (e.g. `nginx:1.27.4`), bumped with a PR.
+
+:::warning
+Consider the following manifest:
+```yaml
+      containers:
+        - name: nginx
+          image: nginx:latest
+```
+the image would **not update** if you **don't follow** this guide, even though there is `latest`:
+the node already has an image called `nginx:latest` and has no reason to pull it again.
 :::
 
-## Options
-These are some useful options you can configure by editing the `config.json` file.
-### Disable an app
-If you want to disable an app (excluding it from the git generator) you can add `"disabled": true`.  
-Example:
-```yaml title="config.json"
-{
-# add-highlight-next-line
-  "disabled": true
-  "image": {
-    "image_list": "x/image1:latest x/image2:latest",
-    "update_strategy": "digest"
-  }
-}
+The image must be **public** on GHCR: neither Flux nor the node use registry credentials.
+Using the GHCR package `ghcr.io/polinetworkorg/<image>`:
+
+1. Add a provider that tracks its `latest` tag:
+
+```yaml title="infrastructure/image-automation/image-providers.yaml"
+---
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSetInputProvider
+metadata:
+  name: <app>-image
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcileEvery: "6h"
+spec:
+  type: OCIArtifactTag
+  url: oci://ghcr.io/polinetworkorg/<image>
+  filter:
+    includeTag: '^latest$'
+    limit: 1
 ```
 
-To reactivate the application just remove this property or set it to `false`.  
-This configuration option is introduced with [this commit](https://github.com/PoliNetworkOrg/terraform/commit/8ddf6e984c802d823573e85f147d48a916556c7c).
+2. Let the GitHub webhook trigger it:
+
+```yaml title="infrastructure/image-automation/receiver.yaml"
+  resources:
+    ...
+    # add-highlight-start
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: ResourceSetInputProvider
+      name: <app>-image
+    # add-highlight-end
+```
+
+3. Replace `clusters/k3s/apps/<k8s-namespace>.yaml` with a `ResourceSet` that renders the
+   same Kustomization, plus an `images` override with the digest:
+
+```yaml title="clusters/k3s/apps/<k8s-namespace>.yaml"
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: <k8s-namespace>
+  namespace: flux-system
+spec:
+  inputStrategy:
+    name: Permute
+  inputsFrom:
+    - kind: ResourceSetInputProvider
+      name: <app>-image
+  resources:
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      metadata:
+        name: <k8s-namespace>
+        namespace: flux-system
+        annotations:
+          # Never garbage-collect the app if the provider exports no inputs.
+          fluxcd.controlplane.io/prune: disabled
+      spec:
+        dependsOn:
+          - name: infrastructure-secret-stores
+          - name: infrastructure-storage
+          - name: infrastructure-traefik
+        interval: 30m
+        retryInterval: 1m
+        timeout: 5m
+        prune: true
+        wait: true
+        sourceRef:
+          kind: GitRepository
+          name: flux-system
+        path: ./apps/<k8s-namespace>
+        # add-highlight-start
+        images:
+          - name: ghcr.io/polinetworkorg/<image>
+            newTag: << inputs.<app>_image.tag | quote >>
+            digest: << inputs.<app>_image.digest | quote >>
+        # add-highlight-end
+```
+
+:::caution Input names
+The inputs are named after the provider, with hyphens turned into underscores:
+the provider `bot-ts-image` becomes `inputs.bot_ts_image`.
+:::
+
+In `deployment.yaml`, keep `image: ghcr.io/polinetworkorg/<image>:latest`: the `name`
+under `images` must match it exactly, and Flux replaces it with the pinned digest.
+See `clusters/k3s/apps/web.yaml` for a complete example.
+
+## Options
+These are some useful operations on existing apps.
+
+### Disable an app
+To stop an app temporarily, **suspend** its Kustomization in the
+[Flux Web UI](https://flux.polinetwork.org) and scale it down from the node:
+
+```sh
+kubectl scale deployment/<app> -n <k8s-namespace> --replicas=0
+```
+
+To bring it back, **resume** the Kustomization: Flux restores the replicas from Git.
+
+### Remove an app
+1. Remove `<k8s-namespace>.yaml` from `clusters/k3s/apps/kustomization.yaml` and delete the
+   file and the `apps/<k8s-namespace>/` folder. Remove its provider and receiver entry too,
+   if it had automatic image updates.
+2. Once merged, Flux deletes the app's resources, except the ones annotated with
+   `prune: disabled`: the namespace, the PVCs and, for apps with automatic image
+   updates, the generated Kustomization. Delete those by hand from the node once you're
+   sure the data is not needed:
+
+```sh
+kubectl delete kustomization <k8s-namespace> -n flux-system   # only for ResourceSet apps
+kubectl delete namespace <k8s-namespace>
+```
+
+Volume directories stay on disk anyway (`reclaimPolicy: Retain`), under
+`/srv/<fast|standard>/volumes/<k8s-namespace>/`.
 
 :::info
-In the git generator configuration the selector is set to `"false"` due to the limitations of `matchExpression`.  
-However, in the application's `config.json` you can set the `disabled` flag to either `false` or `"false"`.
+The `config.json` files with `"disabled": true` you may find at the root of polinetwork-cd
+belong to the old ArgoCD setup. Flux doesn't read them.
 :::

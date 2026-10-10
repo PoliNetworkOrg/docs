@@ -3,57 +3,112 @@ sidebar_position: 1
 ---
 # Setup
 
-If it's your first time accessing the infrastructure, you'll need to setup the tools and configure them.
+If it's your first time accessing the infrastructure, you'll need to set up the tools and configure them.
 
 :::caution
 This tutorial assumes your account has the right permissions to access the infrastructure. If not, please contact the team.
+SSH access to the node is restricted to the **Direttivo** Entra ID group.
 :::
 
-## Azure CLI & Kubectl
+## How access works
 
-- Download and install Kubectl [here](https://kubernetes.io/docs/tasks/tools/install-kubectl/).
+The K3s node `k3s01` has **no public IP**. Its private address is `10.43.1.4`,
+inside the Azure VNet `vnet-k3s`, and the Azure firewall (NSG) denies all inbound
+traffic. Nothing reaches the VM directly from the Internet:
 
-- Download and install the Azure CLI [here](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest).
+- websites reach the cluster through a **Cloudflare Tunnel** (an outbound connection
+  opened by `cloudflared` pods running in the cluster);
+- people reach the VM through **Cloudflare WARP**, which routes `10.43.1.4` through
+  the same tunnel, and **Cloudflare Access for Infrastructure**, which signs a
+  short-lived SSH certificate after you log in with your PoliNetwork account.
+
+There is no kubeconfig to download: you SSH into the node and run `kubectl` there.
+
+## Cloudflare WARP & SSH
+
+- Install the [Cloudflare WARP client](https://developers.cloudflare.com/cloudflare-one/connections/connect-devices/warp/download-warp/).
+
+- Enroll it in PoliNetwork's Cloudflare Zero Trust organization
+  (*Preferences → Account → Login to Cloudflare Zero Trust*) and log in with your
+  PoliNetwork account. Ask the team for the organization (team) name.
+
+- With WARP connected, SSH into the node:
+
+  ```sh
+  ssh pnadmin@10.43.1.4
+  ```
+
+  The first time, your browser asks you to authenticate. You don't need an SSH key:
+  Cloudflare issues a short-lived certificate for the `pnadmin` user, and the node
+  only accepts keys and Cloudflare Access certificates (no passwords, no root login).
+
+- To check if everything is working, run `k3s kubectl get pods -n <namespace>`. You should see a list of pods.
+
+:::tip
+`pnadmin` is in the `k3s-admin` group, which can read the K3s kubeconfig, so
+`k3s kubectl` works without `sudo`. Add an alias to save some typing:
+
+```sh
+echo "alias kubectl='k3s kubectl'" >> ~/.bashrc
+```
+
+The rest of the docs write `kubectl` and assume this alias.
+:::
+
+:::info
+The possible values of ```<namespace>``` match the folders in
+[`apps/`](https://github.com/polinetworkorg/polinetwork-cd/tree/main/apps) in the
+polinetwork-cd repository (e.g. `web`, `backend`, `postgres`). Run
+`kubectl get namespaces` to see them all.
+:::
+
+:::danger Break-glass access
+If Cloudflare is down or the tunnel is broken, you can still reach the VM through
+**Azure Run Command** or the **Serial Console** in the Azure portal (VM `k3s01`,
+resource group `rg-polinetwork`). Use them only for emergencies.
+:::
+
+## Azure CLI
+
+You still need the Azure CLI to manage secrets in Key Vault and to inspect Azure
+resources.
+
+- Download and install the [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest).
 
 - Run ```az login``` to login.
 
-- Run ```sudo az aks install-cli``` to install kubectl
+You don't need `az aks get-credentials` or `kubelogin` anymore: those were only
+needed for the old AKS cluster.
 
-- Run ```az aks get-credentials --resource-group rg-polinetwork --name aks-polinetwork``` to configure Kubectl.
+## Web dashboards
 
-- Run ```kubelogin convert-kubeconfig``` if you have installed Kubectl > v1.26
-
-- To check if everything is working, run ```kubectl get pods -n <namespace>```. You should see a list of pods.
-
-:::info
-The possible values of ```<namespace>``` may vary depending on the project you're working on. If you're not sure, ask the team.
-:::
-
-:::danger
-Starting from Kubectl v1.26, the Azure auth plugin has been removed. If you're using a new version, you'll need to install Kubectl and Kubelogin. Then run ```kubectl get pods -n <namespace>``` again.
-
-For now as there is no install instruction on the kubelogin repo for linux, download the latest release for your computer architecture from [here](https://github.com/Azure/kubelogin/releases), unzip it and run it with `./kubelogin convert-kubeconfig`. Follow the indicated steps
-:::
+| URL | What | Who can log in |
+|-----|------|----------------|
+| [flux.polinetwork.org](https://flux.polinetwork.org) | Flux Web UI: sync status of every app, reconcile/suspend/resume | Direttivo, via auth.polinetwork.org |
+| [monitoring.polinetwork.org](https://monitoring.polinetwork.org) | Grafana dashboards (Prometheus metrics) | Grafana accounts |
+| [status.polinetwork.org](https://status.polinetwork.org) | Uptime Kuma status page | Public |
 
 ## Port Forwarding
 
-To access services running on the cluster (such as the MariaDB database), you'll need to forward the correct ports. To do so, we need the correct pod name.
-
-- Run ```kubectl get pods -n <namespace>``` to get the pod name. The pod name is listed under the ```NAME``` column.
-
-- Run ```kubectl port-forward <pod-name> <local-port>:<remote-port> -n <namespace>```  
-For example, if you want to access the MariaDB database, you'll need to run
+To access services running on the cluster (such as the PostgreSQL database), you
+need two hops: `kubectl port-forward` on the node, and an SSH tunnel from your
+machine to the node. You can do both with one command:
 
 ```sh
-kubectl port-forward <pod-name> 3306:3306 -n <namespace>
+ssh -L <local-port>:localhost:<remote-port> pnadmin@10.43.1.4 \
+  k3s kubectl port-forward -n <namespace> svc/<service-name> <remote-port>:<service-port>
 ```
+
+For example, to reach PostgreSQL on `localhost:5432`:
+
+```sh
+ssh -L 5432:localhost:5432 pnadmin@10.43.1.4 \
+  k3s kubectl port-forward -n postgres svc/postgres-service 5432:5432
+```
+
+Keep the command running while you use the connection, and stop it with `Ctrl+C`.
 
 :::tip
-If you're using the MariaDB database, you can use the following command to get the pod name and forward the port in one go:  
-
-```sh
-PODNAME=$(kubectl get pods --no-headers -n mariadb -o custom-columns=":metadata.name" | tail -1); kubectl port-forward -n mariadb $PODNAME 3306:3306
-```
-
+Run `kubectl get svc -n <namespace>` on the node to find service names and ports.
 You can use the same template to connect to other services.
 :::
