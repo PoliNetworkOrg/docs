@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
+/* the spacious layout (docs pages) isn't part of the preset */
+@import 'fumadocs-ui/css/generated/spacious.css';
 
 /*
  * Theme derived from the PoliNetwork blue #1156ae, oklch(0.466 0.155 257.4):

@@ -1,5 +1,5 @@
 import type { Route } from './+types/docs'
-import { DocsLayout } from 'fumadocs-ui/layouts/docs'
+import { DocsLayout } from 'fumadocs-ui/layouts/spacious'
 import {
   DocsBody,
   DocsDescription,
@@ -7,7 +7,7 @@ import {
   DocsTitle,
   MarkdownCopyButton,
   ViewOptionsPopover,
-} from 'fumadocs-ui/layouts/docs/page'
+} from 'fumadocs-ui/layouts/spacious/page'
 import { docs, source } from '@/lib/source'
 import { baseOptions } from '@/lib/layout.shared'
 import { useFumadocsLoader } from 'fumadocs-core/source/client'
