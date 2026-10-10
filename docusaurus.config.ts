@@ -149,6 +149,8 @@ const config: Config = {
     prism: {
       theme: materialThemes.darker,
       darkTheme: materialThemes.darker,
+      // bash also registers the `sh` and `shell` aliases
+      additionalLanguages: ['bash'],
       magicComments: [
         {
           className: 'theme-code-block-highlighted-line',
