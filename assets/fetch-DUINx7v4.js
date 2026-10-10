@@ -1,0 +1,1 @@
+export{t as fetchClient}from"./fetch-DaI_UKoS.js";

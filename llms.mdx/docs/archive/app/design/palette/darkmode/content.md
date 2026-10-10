@@ -1,0 +1,6 @@
+# darkmode (/docs/archive/app/design/palette/darkmode)
+
+#1B2132
+#232A3E
+#677098
+#AFB5D9

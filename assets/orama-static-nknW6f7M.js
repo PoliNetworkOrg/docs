@@ -1,0 +1,1 @@
+export{t as oramaStaticClient,n as staticClient,r as useStaticSearch}from"./orama-static-DLKIL946.js";

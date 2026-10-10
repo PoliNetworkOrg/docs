@@ -1,0 +1,59 @@
+# Docs
+
+- [PoliNetwork's Technical Documentation](/docs/intro)
+- Infrastructure
+  - [Intro](/docs/infrastructure/Introduction)
+  - Getting Started
+    - [Setup](/docs/infrastructure/getting-started/setup)
+    - Cloud Infrastructure
+      - [Cloud Infrastructure](/docs/infrastructure/getting-started/cloud-infrastructure)
+      - [Terraform](/docs/infrastructure/getting-started/cloud-infrastructure/terraform): Detailed overview of our Azure-based infrastructure managed via the polinetworkorg/terraform repository.
+      - [K3s Node](/docs/infrastructure/getting-started/cloud-infrastructure/k3s-node): The k3s01 VM, how Ansible configures it, and how to run the playbooks.
+      - [Flux](/docs/infrastructure/getting-started/cloud-infrastructure/flux): How Flux deploys the polinetwork-cd repository to the K3s cluster.
+    - Pipelines
+      - [CI](/docs/infrastructure/getting-started/pipelines/ci)
+      - [CD](/docs/infrastructure/getting-started/pipelines/cd)
+    - K8s Basics
+      - [Intro](/docs/infrastructure/getting-started/k8s-basics/intro)
+      - Day-to-day
+        - [Monitoring](/docs/infrastructure/getting-started/k8s-basics/day-to-day/monitoring)
+        - [SSH](/docs/infrastructure/getting-started/k8s-basics/day-to-day/ssh)
+  - Guides
+    - [Add a New Secret](/docs/infrastructure/Guides/add-a-new-secret)
+    - [Add Storage](/docs/infrastructure/Guides/add-storage)
+    - [Backups](/docs/infrastructure/Guides/backups)
+    - [Deploy a New App](/docs/infrastructure/Guides/deploy-a-new-app)
+- Archived Projects 🗃️
+  - [Archived Projects 🗃️](/docs/archive): Collection of documentations for archived projects and repositories.
+  - PoliFemo
+    - [PoliFemo](/docs/archive/app)
+    - [emoji](/docs/archive/app/emoji)
+    - [Features App (in ordine di priorita')](/docs/archive/app/features)
+    - Design
+      - [emoji](/docs/archive/app/design/emoji)
+      - [schermate](/docs/archive/app/design/schermate)
+      - Calendario
+        - [caratteristiche](/docs/archive/app/design/calendario/caratteristiche)
+        - [sincronizzazione](/docs/archive/app/design/calendario/sincronizzazione)
+      - Home
+        - [caratteristiche](/docs/archive/app/design/home/caratteristiche)
+      - Palette
+        - [darkmode](/docs/archive/app/design/palette/darkmode)
+        - [lightmode](/docs/archive/app/design/palette/lightmode)
+    - Developer
+      - [roles](/docs/archive/app/developer/developer-info)
+      - [diagrams](/docs/archive/app/developer/mermaid)
+      - Backend
+        - [Prima installazione su server](/docs/archive/app/developer/backend/runOnServer)
+        - [ToDo Backend](/docs/archive/app/developer/backend/todo_backend)
+        - DBPolifemo
+          - [TabellaGroups](/docs/archive/app/developer/backend/DBPolifemo/TabellaGroups)
+          - [TabelleArticle](/docs/archive/app/developer/backend/DBPolifemo/TabelleArticle)
+          - [TabelleCalendar](/docs/archive/app/developer/backend/DBPolifemo/TabelleCalendar)
+          - Old
+            - [inserisci.py](/docs/archive/app/developer/backend/DBPolifemo/old/inserisci.py)
+      - Data structures
+        - [articles](/docs/archive/app/developer/data-structures/articles)
+      - Frontend
+        - [Convenzioni](/docs/archive/app/developer/frontend/conventions)
+        - [Components](/docs/archive/app/developer/frontend/usefulComponents)

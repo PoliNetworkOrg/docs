@@ -1,0 +1,5 @@
+import{i as e}from"./rolldown-runtime-Dd_uD5pT.js";import{t}from"./jsx-runtime-DREnUpxT.js";var n=e(t()),r={title:`emoji`},i=`Le emoji, se usate, sono consentite solo quelle di Unicode 11 in giù (11,10,9, ecc...) per questioni di retrocompatibilità.
+Sito ufficiale delle emoji di Unicode https://emojipedia.org/unicode-11.0/
+`,a={contents:[{heading:void 0,content:`Le emoji, se usate, sono consentite solo quelle di Unicode 11 in giù (11,10,9, ecc...) per questioni di retrocompatibilità.
+Sito ufficiale delle emoji di Unicode https://emojipedia.org/unicode-11.0/`}],headings:[]},o=[];function s(e){let t={a:`a`,p:`p`,...e.components};return(0,n.jsxs)(t.p,{children:[`Le emoji, se usate, sono consentite solo quelle di Unicode 11 in giù (11,10,9, ecc...) per questioni di retrocompatibilità.
+Sito ufficiale delle emoji di Unicode `,(0,n.jsx)(t.a,{href:`https://emojipedia.org/unicode-11.0/`,children:`https://emojipedia.org/unicode-11.0/`})]})}function c(e={}){let{wrapper:t}=e.components||{};return t?(0,n.jsx)(t,{...e,children:(0,n.jsx)(s,{...e})}):s(e)}export{i as _markdown,c as default,r as frontmatter,a as structuredData,o as toc};

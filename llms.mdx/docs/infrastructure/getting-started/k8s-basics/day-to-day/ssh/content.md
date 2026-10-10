@@ -1,0 +1,16 @@
+# SSH (/docs/infrastructure/getting-started/k8s-basics/day-to-day/ssh)
+
+## SSH [#ssh]
+Normally you shouldn't SSH into a pod to execute repetitive commands, instead you should configure them in the Dockerfile of your application.
+To connect into a pod's terminal, first [SSH into the node](/docs/infrastructure/getting-started/setup#cloudflare-warp--ssh), then use the `kubectl exec` command like so
+```
+kubectl exec -n :pod-namespace: -it deploy/:deployment-name: -- /bin/sh
+```
+this will open a shell inside a pod of that deployment (use `/bin/bash` if the image has it). <br/>
+Mind there is no `screen` installed by default but you can use `nohup`.
+
+<Callout type="caution">
+
+Anything you change inside a pod is lost when the pod restarts, and Flux reverts changes made with `kubectl edit`. Make persistent changes in the [polinetwork-cd](https://github.com/polinetworkorg/polinetwork-cd) repository.
+
+</Callout>

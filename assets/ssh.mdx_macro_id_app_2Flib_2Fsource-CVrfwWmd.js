@@ -1,0 +1,21 @@
+import{i as e}from"./rolldown-runtime-Dd_uD5pT.js";import{t}from"./jsx-runtime-DREnUpxT.js";var n=e(t()),r={title:`SSH`},i=`## SSH [#ssh]
+Normally you shouldn't SSH into a pod to execute repetitive commands, instead you should configure them in the Dockerfile of your application.
+To connect into a pod's terminal, first [SSH into the node](/docs/infrastructure/getting-started/setup#cloudflare-warp--ssh), then use the \`kubectl exec\` command like so
+\`\`\`
+kubectl exec -n :pod-namespace: -it deploy/:deployment-name: -- /bin/sh
+\`\`\`
+this will open a shell inside a pod of that deployment (use \`/bin/bash\` if the image has it). <br/>
+Mind there is no \`screen\` installed by default but you can use \`nohup\`.
+
+<Callout type="caution">
+
+Anything you change inside a pod is lost when the pod restarts, and Flux reverts changes made with \`kubectl edit\`. Make persistent changes in the [polinetwork-cd](https://github.com/polinetworkorg/polinetwork-cd) repository.
+
+</Callout>
+`,a={contents:[{heading:`ssh`,content:"Normally you shouldn't SSH into a pod to execute repetitive commands, instead you should configure them in the Dockerfile of your application.\nTo connect into a pod's terminal, first SSH into the node, then use the `kubectl exec` command like so"},{heading:`ssh`,content:"this will open a shell inside a pod of that deployment (use `/bin/bash` if the image has it). \nMind there is no `screen` installed by default but you can use `nohup`."},{heading:`ssh`,content:"Anything you change inside a pod is lost when the pod restarts, and Flux reverts changes made with `kubectl edit`. Make persistent changes in the polinetwork-cd repository."}],headings:[{id:`ssh`,content:`SSH`}]},o=[{depth:2,url:`#ssh`,title:(0,n.jsx)(n.Fragment,{children:`SSH`})}];function s(e){let t={a:`a`,code:`code`,h2:`h2`,p:`p`,pre:`pre`,span:`span`,...e.components},{Callout:r}=t;return r||l(`Callout`,!0),(0,n.jsxs)(n.Fragment,{children:[(0,n.jsx)(t.h2,{id:`ssh`,children:`SSH`}),`
+`,(0,n.jsxs)(t.p,{children:[`Normally you shouldn't SSH into a pod to execute repetitive commands, instead you should configure them in the Dockerfile of your application.
+To connect into a pod's terminal, first `,(0,n.jsx)(t.a,{href:`/docs/infrastructure/getting-started/setup#cloudflare-warp--ssh`,children:`SSH into the node`}),`, then use the `,(0,n.jsx)(t.code,{children:`kubectl exec`}),` command like so`]}),`
+`,(0,n.jsx)(n.Fragment,{children:(0,n.jsx)(t.pre,{className:`shiki shiki-themes github-light github-dark`,style:{"--shiki-light":`#24292e`,"--shiki-dark":`#e1e4e8`,"--shiki-light-bg":`#fff`,"--shiki-dark-bg":`#24292e`},tabIndex:`0`,icon:`<svg viewBox="0 0 24 24"><path d="M 6,1 C 4.354992,1 3,2.354992 3,4 v 16 c 0,1.645008 1.354992,3 3,3 h 12 c 1.645008,0 3,-1.354992 3,-3 V 8 7 A 1.0001,1.0001 0 0 0 20.707031,6.2929687 l -5,-5 A 1.0001,1.0001 0 0 0 15,1 h -1 z m 0,2 h 7 v 3 c 0,1.645008 1.354992,3 3,3 h 3 v 11 c 0,0.564129 -0.435871,1 -1,1 H 6 C 5.4358712,21 5,20.564129 5,20 V 4 C 5,3.4358712 5.4358712,3 6,3 Z M 15,3.4140625 18.585937,7 H 16 C 15.435871,7 15,6.5641288 15,6 Z" fill="currentColor" /></svg>`,children:(0,n.jsx)(t.code,{children:(0,n.jsx)(t.span,{className:`line`,children:(0,n.jsx)(t.span,{children:`kubectl exec -n :pod-namespace: -it deploy/:deployment-name: -- /bin/sh`})})})})}),`
+`,(0,n.jsxs)(t.p,{children:[`this will open a shell inside a pod of that deployment (use `,(0,n.jsx)(t.code,{children:`/bin/bash`}),` if the image has it). `,(0,n.jsx)(`br`,{}),`
+Mind there is no `,(0,n.jsx)(t.code,{children:`screen`}),` installed by default but you can use `,(0,n.jsx)(t.code,{children:`nohup`}),`.`]}),`
+`,(0,n.jsx)(r,{type:`caution`,children:(0,n.jsxs)(t.p,{children:[`Anything you change inside a pod is lost when the pod restarts, and Flux reverts changes made with `,(0,n.jsx)(t.code,{children:`kubectl edit`}),`. Make persistent changes in the `,(0,n.jsx)(t.a,{href:`https://github.com/polinetworkorg/polinetwork-cd`,children:`polinetwork-cd`}),` repository.`]})})]})}function c(e={}){let{wrapper:t}=e.components||{};return t?(0,n.jsx)(t,{...e,children:(0,n.jsx)(s,{...e})}):s(e)}function l(e,t){throw Error(`Expected `+(t?`component`:`object`)+" `"+e+"` to be defined: you likely forgot to import, pass, or provide it.")}export{i as _markdown,c as default,r as frontmatter,a as structuredData,o as toc};

@@ -1,0 +1,300 @@
+# Terraform (/docs/infrastructure/getting-started/cloud-infrastructure/terraform)
+
+## What is Terraform? [#what-is-terraform]
+
+Terraform is an open-source Infrastructure as Code (IaC) tool developed by
+HashiCorp. It allows you to define, provision, and manage the infrastructure
+using a declarative configuration language. This means you describe the desired
+state of the infrastructure, and Terraform takes care of creating and updating
+the resources to match that state.
+
+<Callout type="important">
+
+This documentation assumes you already have the Terraform CLI installed on your
+local machine. If you need help setting up Terraform, please refer to the
+[official documentation](https://learn.hashicorp.com/tutorials/terraform/install-cli).
+
+You'll also need to be logged in with the Azure CLI and have the necessary
+permissions to manage the resources in our Azure subscription (more on this
+[here](/docs/infrastructure/getting-started/setup#azure-cli)).
+
+Once you have logged in to the Azure CLI, select the subscription and export it
+for the provider:
+
+```sh
+az account set --subscription <subscription-id>
+export ARM_SUBSCRIPTION_ID=<subscription-id>
+export TF_VAR_subscription_id="$ARM_SUBSCRIPTION_ID"
+```
+
+More about this in the [repository README](https://github.com/PoliNetworkOrg/terraform/#local-checks).
+
+</Callout>
+
+### Why We Use Terraform [#why-we-use-terraform]
+
+Our organization leverages Terraform to manage our Azure cloud infrastructure for several important reasons:
+
+- **Consistency:** Defining our infrastructure as code ensures that every environment is configured the same way, reducing the chance of human error.
+- **Automation:** Terraform automates the provisioning and modification of resources, streamlining our deployment processes.
+- **Version Control:** Storing Terraform configurations in version control systems allows us to track changes, collaborate effectively, and revert to previous versions if needed.
+- **Modularity:** Terraform encourages breaking down the infrastructure into reusable modules, which simplifies management and enhances maintainability.
+
+### How Terraform Works [#how-terraform-works]
+
+<Callout type="warning">
+
+To run terraform commands you need to have the right permissions and credentials.
+If you are not sure about your permissions, please contact the IT department (but
+if you have to ask you probably shouldn't run `apply` yourself anyway).
+
+If you haven't yet set up the Azure CLI please refer to the [setup guide](/docs/infrastructure/getting-started/setup#azure-cli).
+
+</Callout>
+
+Terraform operates through a simple yet powerful workflow:
+
+1. **Write:** You define the infrastructure in configuration files (typically with a `.tf` extension).
+2. **Plan:** Running `terraform plan` generates an execution plan, showing you the changes Terraform will make to achieve the desired state.
+3. **Apply:** Executing `terraform apply` implements the changes, creating or updating the infrastructure accordingly.
+
+<Callout type="danger">
+
+Running Terraform commands can modify the cloud infrastructure.
+
+**THIS CAN INCUR COSTS OR CAUSE DOWNTIME AND PERMANENT DATA LOSS IF NOT DONE PROPERLY.**
+
+Always review the execution plan (`terraform plan`) before applying changes.
+
+</Callout>
+
+### Terraform Code vs. Terraform State vs. Azure State [#terraform-code-vs-terraform-state-vs-azure-state]
+
+- **Terraform Code:**  
+  This consists of the configuration files that describe your desired
+  infrastructure. These files are the blueprint for what you want the infrastructure to look like.
+
+- **Terraform State:**  
+  The state file (we have two of them, see [State Management](#state-management)) records the current state
+  of the infrastructure as managed by Terraform. This file is critical because
+  it maps your configuration to the real-world resources, tracks dependencies,
+  and allows Terraform to detect what needs to change during updates. Our state
+  file is stored remotely (in an Azure Storage Account) and is locked using
+  Azure's integrated leasing mechanism to prevent concurrent modifications.
+
+- **Azure State:**  
+  This is the actual state of resources deployed in the Azure environment.
+  While Terraform keeps track of these resources via its state file, the real
+  configuration and runtime details exist within Azure. The Terraform state acts
+  as an intermediary, ensuring that the desired state (from the Terraform code)
+  and the actual state (in Azure) are in sync. If resources are modified directly
+  in Azure without updating Terraform, discrepancies may occur, highlighting the
+  importance of using Terraform as the single source of truth.
+
+This clear separation between code, Terraform state, and the actual cloud state
+is key to maintaining a reliable and predictable infrastructure.
+
+## Terraform Implementation Overview [#terraform-implementation-overview]
+
+Welcome to the documentation for the **polinetworkorg/terraform** repository.
+This page provides an in-depth look at our Terraform implementation on
+**Microsoft Azure**, detailing the architecture of our infrastructure and the
+key modules that make it up. While this overview highlights our main components,
+it’s important to note that there are alternative approaches to similar problems,
+and our setup is tailored to our current needs.
+
+### Repository Overview [#repository-overview]
+
+The **polinetworkorg/terraform** repository is our centralized solution for
+provisioning and managing cloud infrastructure on Azure. Its default branch is
+**`stable`**.
+
+The code is split into two independent **root modules** (the folders you run
+`terraform` in). Each root owns its resources and has its own state file; a root
+can only read the other's resources through data sources, never declare them.
+
+- **`environments/k3s`:** the production K3s platform. It defines:
+  - the `k3s01` VM (Debian 13 ARM64) and its two data disks, `disk-k3s-fast`
+    (Premium SSD v2, 64 GB) and `disk-k3s-standard` (Standard SSD, 128 GB);
+  - the network: `vnet-k3s` (`10.43.0.0/16`), a NAT Gateway for outbound traffic,
+    and an NSG that denies all inbound traffic;
+  - the Key Vaults `kv-pn-apps` (application secrets) and `kv-pn-infra`
+    (platform secrets);
+  - the managed identities, including the one External Secrets uses through
+    workload identity federation, and the public OIDC issuer the cluster's
+    service-account tokens are verified against.
+- **`environments/legacy`:** everything from before the migration: the old AKS
+  cluster and its Kubernetes/Helm resources (ArgoCD, Longhorn, Kubernetes
+  Dashboard, MariaDB, ...), plus shared resources such as the resource group
+  `rg-polinetwork`, the backup storage account `polinetworkbackups` and the budgets.
+
+What runs *inside* the VM is not managed here: see [K3s Node](/docs/infrastructure/getting-started/cloud-infrastructure/k3s-node) and [Flux](/docs/infrastructure/getting-started/cloud-infrastructure/flux).
+
+<Callout type="info">
+
+While the choices made in this implementation reflect our specific requirements
+and constraints, it's worth noting that other approaches exist for managing
+cloud infrastructure with Terraform.
+
+Our modular design, state management strategy,
+and access controls are tailored to our current operational needs and funding
+situation—but they are not set in stone. Please feel free to reach out to the
+IT department if you have any questions or suggestions.
+
+</Callout>
+
+### Infrastructure Structure [#infrastructure-structure]
+
+Our repository is organized to clearly separate concerns and promote reusability.
+While the exact folder structure may vary, a typical layout looks like this:
+
+```bash
+📁 polinetworkorg/terraform/
+ ├─ 📁 environments/        # Root modules: run terraform here, with -chdir
+ │   ├─ 📁 k3s/             # K3s node, network, Key Vaults, identities (k3s.tfstate)
+ │   └─ 📁 legacy/          # Old AKS platform and shared resources (state.tfstate)
+ ├─ 📁 modules/             # Modules used by the legacy root
+ │   ├─ 📁 aks/             # Azure Kubernetes Service
+ │   ├─ 📁 argocd/          # ArgoCD installation
+ │   ├─ 📁 shared/          # Backup storage account, budgets
+ │   ├─ 📁 storage/         # Azure Storage Account where the Terraform state is kept
+ │   └─ [other modules]     # Additional modules for specific services
+ ├── README.md              # General repository documentation
+ ├── STATE_MIGRATION.md     # How the state was split between the two roots
+ └── [other files]
+```
+
+### State Management [#state-management]
+
+We use an **Azure Storage Account** for managing the Terraform state. The state
+files are stored within a dedicated container named `terraform-state`,
+as defined in our **storage** module:
+
+| Root | State file |
+|------|------------|
+| `environments/legacy` | `state.tfstate` |
+| `environments/k3s` | `k3s.tfstate` |
+
+ The integrated leasing mechanism provided
+by the Azure Storage Account is used for state locking, ensuring that concurrent
+Terraform operations do not conflict with each other.
+
+### Access and Authorization [#access-and-authorization]
+
+Given the critical nature of our infrastructure, modifications (e.g., running
+`terraform apply`) are restricted to personnel with sufficient clearance. As an
+association, any infrastructure changes require approval from either the Head of
+the IT Department or the Directive Council. All authorization is managed through
+**Microsoft's Entra ID system**, ensuring that only properly authenticated and
+authorized users can perform these operations.
+
+### Funding and Nonprofit Considerations [#funding-and-nonprofit-considerations]
+
+As a nonprofit organization, we benefit from a **Microsoft Azure Grant for Nonprofits**,
+which provides us with a budget of **€2000 per year**. This support helps offset
+our cloud costs and underpins our commitment to maintaining a robust and scalable
+infrastructure.
+
+<Callout type="info">
+
+This is one of the core reasons we are structured as a nonprofit organization, and why
+we use Azure as our cloud provider.
+
+You can find more about our benefits [here](https://www.microsoft.com/en-us/nonprofits/azure).
+
+If you have access to the adminorg account, you can check the current status of
+our Azure grant [here](https://www.microsoftazuresponsorships.com/).
+
+</Callout>
+
+## Making Changes to the Infrastructure [#making-changes-to-the-infrastructure]
+
+This section provides a basic guide on how to update our infrastructure using
+Terraform and introduces some of the automated workflows that help us maintain
+consistency and control.
+
+### Basic Workflow for Infrastructure Changes [#basic-workflow-for-infrastructure-changes]
+
+1. **Edit the Terraform Code:**  
+   Modify the relevant configuration files to define your desired changes in the
+   infrastructure. Most changes belong to `environments/k3s`.
+
+2. **Review Your Changes Locally:**  
+   Run `terraform -chdir=environments/<root> plan` to generate an execution plan.
+   This command will show you what changes will be made to align the actual
+   infrastructure with your code.
+
+3. **Open a Pull Request against `stable`:**  
+   The **Terraform workflow** runs format, init, validate and plan for both roots
+   and posts one comment per root with the plan. Pull requests never apply.
+
+4. **Cost Estimation with Infracost:**  
+   When you open a pull request, our **Infracost workflow** is triggered
+   automatically. This workflow calculates the estimated cost impact of your
+   changes and posts a report in the pull request comments, so you can review
+   any potential cost implications before merging.
+   <Callout type="tip">
+
+   If you want to run Infracost locally, you can install it by following the
+   [official documentation](https://www.infracost.io/docs/).
+
+   </Callout>
+
+5. **Apply the Changes:**  
+   After your changes have been reviewed and approved, merge the pull request.
+   The push to `stable` runs the plans again, then waits for a maintainer to
+   approve the GitHub **`production`** environment. Once approved, it applies
+   `k3s` first and `legacy` second. You don't run `terraform apply` yourself.
+
+6. **Drift Detection:**  
+   A nightly **Drift workflow** runs to detect any discrepancies between the
+   current Terraform state and the actual state in Azure. If this workflow
+   detects a drift from what the `terraform plan` output would predict, it
+   automatically opens an issue for further investigation.
+   At the moment it only checks the `legacy` root.
+
+### Basic Terraform CLI Commands [#basic-terraform-cli-commands]
+
+Always pick a root with `-chdir`, e.g. `terraform -chdir=environments/k3s plan`.
+Running Terraform at the repository root does nothing useful.
+
+- **`terraform init`**  
+  Initializes the working directory containing the Terraform configuration files.
+  <Callout type="tip">
+
+  This has to be run as soon as you clone the repository or when you pull changes
+  that include new modules or providers. Locally, add
+  `-backend-config=use_oidc=false` (OIDC is only for GitHub Actions).
+
+  </Callout>
+
+- **`terraform plan`**  
+  Generates an execution plan showing what changes will be applied to the infrastructure.
+
+- **`terraform apply`**  
+  Applies the changes defined in your Terraform configuration to the cloud environment.
+  In practice the Terraform workflow does this for you after the `production` approval.
+
+- **`terraform destroy`**  
+  Destroys the resources managed by Terraform, useful for tearing down test environments or decommissioning infrastructure.
+
+  <Callout type="danger">
+
+  If you ever happen to be as much as tempted of using `terraform destroy`, you
+  better be **SURE AS SHIT** about what you are doing. Never run it without
+  `-chdir`, and remember the K3s data disks have `prevent_destroy` for a reason. Make sure to review the
+  implications thoroughly before proceeding.
+  > *One does not simply destroy PoliNetwork with one command.*
+
+  </Callout>
+
+By following these steps and leveraging our automated workflows, you ensure that
+infrastructure changes are managed in a consistent, cost-aware, and controlled
+manner.
+
+## References [#references]
+
+- [Terraform Documentation](https://www.terraform.io/docs/index.html)
+- [Microsoft Azure Documentation](https://docs.microsoft.com/en-us/azure/)
+- [Infracost Documentation](https://www.infracost.io/docs/)
+- [Terraform Repository](https://github.com/polinetworkorg/terraform)

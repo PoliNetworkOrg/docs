@@ -1,0 +1,1 @@
+import{i as e}from"./rolldown-runtime-Dd_uD5pT.js";import{t}from"./react-CQOZoUwg.js";function n(e,t){return e===t?!0:Array.isArray(e)&&Array.isArray(t)?t.length===e.length&&e.every((e,r)=>n(e,t[r])):!1}var r=e(t(),1);function i(e,t,i=(e,t)=>!n(e,t)){let[a,o]=(0,r.useState)(e);i(a,e)&&(t(e,a),o(e))}export{n,i as t};

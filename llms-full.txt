@@ -1,0 +1,3042 @@
+# caratteristiche (/docs/archive/app/design/calendario/caratteristiche)
+
+Divisione accademico-personale per tenere ordine
+possibilità di scaricare la schermata ?
+
+TASTO AGGIORNA
+
+
+# sincronizzazione (/docs/archive/app/design/calendario/sincronizzazione)
+
+Per opzione sincronizza:
+cosa sincronizzare?
+google, altro? sistema?
+
+
+# emoji (/docs/archive/app/design/emoji)
+
+QUESTIONE EMOJI
+
+Si pensava a usarle come reazioni ad esempio agli eventi creati dall’utente e/o quelli previsti
+dal calendario accademico
+es. l’utente mette la reazione e il giorno dell’evento gli arriverà la notifica con titolo ed emoji
+abbinata (da capire come mettere in grafica)
+
+stessa cosa per quanto riguarda reazioni a articoli, materiali da scaricare per orientare meglio l’utente
+anche in base a chi già ha letto/scaricato quel tipo di documento.
+
+
+# caratteristiche (/docs/archive/app/design/home/caratteristiche)
+
+Caratteristiche generali:
+
+- spigoli raccordati
+- effetto “vetro” e material (giocoso e dinamico)
+- icone semplici flat (solo outline?)
+
+
+# darkmode (/docs/archive/app/design/palette/darkmode)
+
+#1B2132
+#232A3E
+#677098
+#AFB5D9
+
+
+# lightmode (/docs/archive/app/design/palette/lightmode)
+
+#454773
+#B7BCD1
+#DBDFF2
+#FFFFFF
+
+
+# schermate (/docs/archive/app/design/schermate)
+
+SCHERMATE:
+
+- login (non obbligatorio)
+- fase personalizzazione iniziale + benvenuto
+- aggiornamento semestrale ---> quanto evidente? notifica nei messaggi? notizia in evidenza?
+- articolo ---> possibilità di download, like/dislike (?)
+- slider per aggiornamenti (?) forse
+- download
+- home
+- news
+- orario lezione
+- calendario
+- materiali
+- impostazioni
+- aule libere
+- poliassoc
+
+
+# TabellaGroups (/docs/archive/app/developer/backend/DBPolifemo/TabellaGroups)
+
+```mermaid
+classDiagram
+
+class Gruppo {
+  String class
+  ENUM office
+  int primary key id
+  ENUM degree
+  ENUM school
+  String id_link
+  ENUM language
+  char type
+  String year
+  ENUM platform
+  int permanent_id 
+  datetime LastUpdateInviteLinkTime
+  ENUM Linkfunzionante
+}
+
+class office{
+  <<enumeration>>
+  Bovisa
+  Como
+  Cremona
+  Lecco
+  Leonardo
+}
+
+class degree{
+  <<enumeration>>
+  LT
+  LM
+  LM
+}
+
+class school{
+  <<enumeration>>
+  ICAT
+  DES
+  3I
+  ICAT+3I
+  AUIC
+}
+
+class language{
+  <<enumeration>>
+  ITA
+  ENG
+}
+
+class type{
+  <<enumeration>>
+  S
+  C
+  E
+}
+
+class platform{
+  <<enumeration>>
+  WA
+  TG
+  FB
+}
+
+class Linkfunzionante{
+  <<enumeration>>
+  Y
+  N
+}
+```
+
+
+# TabelleArticle (/docs/archive/app/developer/backend/DBPolifemo/TabelleArticle)
+
+```mermaid
+classDiagram
+
+class Article {
+  int primary key id_article
+  String title
+  String subtitle
+  String content
+  Datetime publishTime
+  Datetime targetTime
+  String music
+  FK id_media
+  int replace_id
+  bool notify
+}
+
+class hashtag{
+  int primary key id_hashtag
+  String text
+}
+
+class territorial{
+  int primary key id_territorial
+  String name
+}
+
+class media{
+  int primary key id_media
+}
+
+
+class link_{
+  int primary key id_link
+  String link
+  FK id_media
+}
+
+class point{
+  int primary key id_point
+  float latitude
+  float longitude
+}
+
+class location{
+  int primary key id_location
+  String name
+  String link
+  FK id_point  
+}
+
+class author{
+  int primary key id_author
+  String name
+  String link
+}
+
+class source{
+  int primary key id_source
+  String name
+  String link
+}
+
+class scritto{
+  FK id_author
+  FK id_article
+}
+
+class su{
+  FK id_territorial
+  FK id_article
+}
+
+class prende{
+  FK id_source
+  FK id_article
+}
+
+class where{
+  FK id_location
+  FK id_article
+}
+
+class tag{
+  FK id_hashtag
+  FK id_article
+}
+
+prende <|--Article
+source <|--prende
+
+su <|--Article
+territorial<|--su
+
+tag <|--Article
+hashtag<|--tag
+
+scritto <|--Article
+author<|--scritto
+
+where <|--Article
+location<|--where
+point <|--location
+
+media <|--Article
+link_<|--media
+
+
+
+```
+
+
+# TabelleCalendar (/docs/archive/app/developer/backend/DBPolifemo/TabelleCalendar)
+
+```mermaid
+classDiagram
+
+class Day {
+  Date  giorno PK
+}
+
+class Tipologia{
+int id_tipologia PK,	
+ENUM name_ 
+}
+
+class appartiene{
+int giorno FK,
+int id_tipologia FK
+}
+
+class lesson{
+int  id_lesson PK,	
+VARCHAR name_,
+VARCHAR aula,
+TIME orarioInizio,
+TIME orarioFine,
+VARCHAR professore
+}
+
+class Presente{
+int giorno FK,
+int id_lesson FK
+}
+
+class Exam{
+int id_exam PK,	
+VARCHAR name_,
+VARCHAR sede,
+int semestre,
+VARCHAR docente,
+datetime data,
+int giorno FK
+}
+
+appartiene<|--Day
+Tipologia<|--appartiene
+
+Presente<|--Day
+lesson<|--Presente
+
+Exam<|--Day
+
+
+```
+
+
+# inserisci.py (/docs/archive/app/developer/backend/DBPolifemo/old/inserisci.py)
+
+```python
+
+import os
+import mysql.connector as database
+import json
+
+connection = database.connect(
+    user='root',
+    password='',
+    host="localhost",
+    database="DBPolifemo"
+)
+
+cursor = connection.cursor()
+
+with open("groups.json", 'r', encoding='cp850') as f:
+    text = f.read()
+    groups = json.loads(text)
+    data = groups["index_data"]
+    for i in range(len(data)):        
+        try:
+            if data[i]["degree"] == None:
+                 data[i]["degree"]=""
+                 
+            if data[i]["school"] == None:
+                 data[i]["school"]=""
+            
+            if data[i]["year"] == None:
+                 data[i]["year"]=""
+            
+            if data[i]["permanentId"] == None:
+                 data[i]["permanentId"]=''
+            
+            if data[i]["linkfunzionante"] == None:
+                 data[i]["linkfunzionante"]=""
+
+            if data[i]["language"] == 'EN' : 
+                 data[i]["language"]='ENG'
+                 
+            if data[i]["language"] == 'IT' : 
+                 data[i]["language"]='ITA'
+
+            data[i]["class"] = json.dumps(data[i]["class"])
+            data[i]["id"] = json.dumps(data[i]["id"])
+            data[i]["id_link"] = json.dumps(data[i]["id_link"])
+                 
+            string = "INSERT IGNORE INTO Groups VALUES ("+ data[i]["class"]  + ", '"+ data[i]["office"]  + "', "+ data[i]["id"]  + ", '"+ data[i]["degree"]  + "','"+ data[i]["school"]  + "',"+ data[i]["id_link"]  + ",'"+ data[i]["language"]  + "','"+ data[i]["type"]  + "', '"+ data[i]["year"]  + "', '"+ data[i]["platform"]  + "', '"+ data[i]["permanentId"]  + "', '"+ data[i]["LastUpdateInviteLinkTime"]  + "', '"+ data[i]["linkfunzionante"]  + "');";
+            replace = string.replace("''", "NULL")
+            cursor.execute(replace)
+            connection.commit()
+        except database.Error as e:
+           print(f"Error retrieving entry from database: {e}")
+           print(replace)
+        except Exception as e:
+            print(f"string error: {e}")
+            print(data[i]["class"])
+        
+```
+
+
+# Prima installazione su server (/docs/archive/app/developer/backend/runOnServer)
+
+```
+	sudo apt install dotnet jq unzip certbot
+	mkdir PoliFemoBackend && cd PoliFemoBackend
+	wget https://raw.githubusercontent.com/PoliNetworkOrg/PoliFemoBackend/main/run.sh
+	sudo chmod +x run.sh
+	sudo certbot certonly --standalone -d api.polinetwork.org
+	mkdir conf.d && cd conf.d
+	mkdir https
+	sudo openssl pkcs12 -export -out $HOME/PoliFemoBackend/conf.d/https/dev_cert.pfx -inkey /etc/letsencrypt/live/api.polinetwork.org/privkey.pem -in /etc/letsencrypt/live/api.polinetwork.org/cert.pem -certfile /etc/letsencrypt/live/api.polinetwork.org/chain.pem
+```
+
+Inserire password a scelta
+
+```
+	cd ..
+	sudo ./run.sh
+```
+
+Poi fare un commit senza uscire dalla sessione SSH, se si riavvia correttamente si può uscire.
+
+
+# ToDo Backend (/docs/archive/app/developer/backend/todo_backend)
+
+# ToDo Backend
+| **Priorità** | **Nome** | **Descrizione** | **Assegnata a** | **Status** |
+|--|--|--|--|--|
+| 1 | Database | Spostare tutta la gestione di articoli e gruppi in mariaDB, almeno per gli articoli dobbiamo essere la fonte di verità, c'è da gestire anche il backup, ad esempio come json locale che ogni tanto viene caricato su GitHub. | Elisabetta | 90% |
+| 2 | Link | Spostare tutte le API su /v1/nomeapi/parametri, Swagger su /v1/_swagger e tutto quello che non porta a niente a un messaggio di errore leggibile sia da browser che come json. | Diego | 100% |
+| 2 | AutoDeploy | Creare un'API che riavvia il server scaricando l'ultima release da GitHub, per ora protetto da una master password. | Diego | 90% |
+| 3 | Articoli | Rendere il sistema resistente alle modifiche fatte agli articoli dopo la pubblicazione, creandone uno nuovo con id nuovo e un parametro aggiuntivo con l'id di quello che sovrascrive. Fare un'API per aggiungere gli articoli (subordinata all'implementazione del login). Aggiungere il parametro notifica sì o no agli articoli. Creare un articolo con tutti i gruppi extra con link e descrizione **(si è deciso che il linguaggio che interpreta l'app è HTML, ma evitare che si creino script dentro)**. | Arme | 90% |
+| 3 | Rooms | API che cerca le aule libere al poli, sia a partire dalla data che a partire dall'aula. Con info sulla presenza di prese in aula e sull'edificio dov'è l'aula. Tenere traccia di quanto un'aula è piena sulla base dei dati forniti in [questo](https://preview.redd.it/5y7e53q933r31.jpg?auto=webp&s=af48b9c425762b67c6ff65c031d17bf6c10a329f) modo dal Frontend. In più fare un'autocompilazione se ti ricordi solo una parte del nome. Quando risponde deve anche avere le coordinate. | Federico B. | 50% |
+| 3 | Login Microsoft | **Anche lato Frontend**: implementare il login con Microsoft all'account del Poli (controllo che non venga messo un qualsiasi account Microsoft?) in modo che il Frontend apra la webview, faccia l'accesso, ottenga i dati, faccia l'hash e dia al server, che deve funzionare in base a questo. Ogni volta che il server manda qualcosa che il client dovrà confrontare come hash deve mandare anche l'algoritmo usato. Hashare gli id Microsoft con SHA256 | Francesco | 95% |
+| 4 | Welcome Screen | Creare un sistema per gestire le Welcome Screen con una data di inizio validità (la fine è automatica perché quella successiva sovrascrive), il server deve mandarle come un articolo specificando che vanno fatte vedere solo a partire da una certa data, magari aggiungendo un attributo e sfruttando gli attributi data già esistenti. Aggiungere agli articoli l'attributo "Corso di Studi" che può essere "null" | Diego | Non iniziato |
+| 4 | PoliFemo | Creare il bot e un'API per comunicare con [botpress](https://botpress.com) e selfhostarlo. | Elia M., ??? | Non iniziato |
+| 4 | Calendario | Creare un'API che interpreta [questo](https://www.polimi.it/fileadmin/user_upload/Studenti/calendario-accademico/2021-2022/CALENDARIO_2021-2022_2021-07-22.pdf) e anche quelli per gli esami (ad esempio [questo](https://www.ingindinf.polimi.it/fileadmin/appelli_triennali/BOZZA__APPELLI_LT_LEOeBV_estiva_2122_Agg310322.pdf) ma si trovano nei siti delle scuole) e manda al client le date in json che servono. | Federico B., Elisabetta | 25% |
+| 4 | Recensioni | Creare un'API che gestisca le recensioni, improntate sulla valutazione del corso e dell'esame più che del professore, la logica è aiutare gli studenti in magistrale a scegliere cosa fare. È subordinato al login e per adesso gli utenti non potranno sapere chi ha scritto cosa perché noi abbiamo solo gli hash. Fare anche un sistema per cui alcuni autorizzati ottengono le liste di quelle in attesa e le accetta o rifiuta (due API diverse). API che dato un id ti dà lo stato. Scraper dei manifesti per avere i professori, sia codice persona che codici vari internazionali. Oppure scrapiamo [orcid](https://orcid.org). | Arme, Francesco | Non iniziato |
+| 5 | PoliMeet | È autoesplicativo, subordinato alla nomina di un responsabile privacy come associazione e alla creazione di un sistema opt in per tenere i dati degli utenti non hashati. | - | Non iniziato |
+
+
+# articles (/docs/archive/app/developer/data-structures/articles)
+
+```mermaid
+classDiagram
+
+Article *-- Author
+Article *-- Position
+Article *-- Point
+Article *-- Territorial
+Article *-- Collection
+
+class Article {
+  int id
+  String title
+  String? subtitle
+  String text //html
+  Author[] authors
+  String[]? sources
+  Position[]? positions
+  String[]? hashtag
+  Territorial[]? territorials
+  DateTime publishTime
+  DateTime? targetTime
+  String[]? music
+  String[]? photos
+  Collection? collection
+}
+
+class Author {
+  int id
+  String name
+  String? link
+}
+
+class Position {
+   Point point
+   string name
+}
+
+class Point {
+   decimal x
+   decimal y
+}
+
+class Territorial {
+   int id
+   String name
+}
+
+class Collection {
+	int id
+	String name
+	String? link
+}
+```
+
+
+# roles (/docs/archive/app/developer/developer-info)
+
+Cose che procrastiniamo:
+
+• Notifiche
+• Componenti riciclabili il più possibile
+• Pagine, “single-use components”
+• Internazionalizzazione
+• Da dove prendiamo i dati (mockup) - Arme
+
+Componenti da dividerci:
+
+- Il bottone back in basso a sx: luke
+- Selettore di lingua – Tray: giacomo
+- Features menu: luke
+- Slider orizzontale [container]: tommaso
+- Card: luke
+- Grid per le cards: luke
+- Search bar: giacomo
+- Title [prop della page]: tommaso
+- Page: tommaso
+- Calendario: elia
+
+Suddivisione compiti:
+Frontend & logica: Elia P. – Tommaso M. – Luke P. – Giacomo M. – Federico G. (Jolly)
+API & Backend: Diego A. – Federico A. – Paolo R.
+Design: tutto il resto
+PR: Giulia
+
+
+# Convenzioni (/docs/archive/app/developer/frontend/conventions)
+
+In questo file vengono descritte un paio di indicazioni generali da seguire nelle contribuzioni di
+codice e qualche guida rapida al fine di aiutare a capire un po' di quirk qua e là
+
+- **[Naming conventions](#naming)**
+- **[Problemi comuni con il type system](#typing)**
+
+## Naming [#naming]
+
+In generale si usa il `camelCase` per cose tipo
+
+- variabili locali
+- funzioni
+- prop dei componenti
+- metodi, attributi e proprietà
+- membri di oggetti e parametri delle funzioni
+
+e il `PascalCase` per le
+
+- classi
+- componenti (anche se di fatto sono solo funzioni)
+- nomi di tipi e interfacce di typescript
+
+ed se caso si può usare anche il `SCREAMING_SNAKE_CASE` per eventuali costanti.
+
+### Esempi [#esempi]
+
+```ts
+// una funzione pura è in camelCase, così come i suoi parametri
+function helloWorld(name: string) {
+    // variabili in generale sono sempre in camelCase
+    const message = `Hello ${name}`
+    console.log(message)
+}
+```
+
+```tsx
+// i componenti sono in PascalCase, ma i props sono in camelCase
+function Button(props: { label: string; onClick?: () => void }) {
+    // le variabili locali sono variabili locali normali, quindi in camelCase
+    const [count, setCount] = useState(0)
+
+    return (
+        <Pressable onPress={() => props.onClick()}>
+            <Text>{props.label}</Text>
+        </Pressable>
+    )
+}
+```
+
+```ts
+// i nomi delle interfacce anche sono in PascalCase (stesso vale per i tipi), e i membri sono in camelCase
+type PageName = "home" | "settings"
+
+interface Bar {
+    foo: PageName
+    bar: number
+}
+
+class FooBar extends Foo implements Bar {
+    // ...
+
+    // i nomi dei metodi sono comunque in pascalCase
+    print() {
+        console.log(this.foo)
+        console.log(this.bar)
+    }
+}
+```
+
+```ts
+// in caso di interfaccia con stesso nome di una classe, la convenzione è di mettere la lettera "I"
+// davanti al nome dell'interfaccia
+interface IFoo {
+    // ...
+}
+
+class Foo implements IFoo {
+    // ...
+}
+```
+
+## Typing [#typing]
+
+Consiglio di fare riferimento al [TypeSript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
+
+Se non siete familiare con typescript potreste trovarvi in difficoltà con il definire un paio di
+tipi e essere tentati ad usare `any`.
+
+Questa cosa va assolutamente evitata ad ogni costo perché è l'unico modo per far spuntare fuori bug
+antipatici dove non si riesce a capire perché le cose non funzionano.
+
+per tanto qua sotto porrò un paio di semplici esempi di cose non completamente intuitive per evitare
+di ritrovarvi senza definizione di tipi
+
+### Definizioni di funzioni [#definizioni-di-funzioni]
+
+```ts
+// il tipo di una funzione generica può essere scritto nel modo più semplice con la sitassi dell'arrow function
+let function: () => void // questa è una funzione senza parametri e senza valore restituito
+
+// i parametri possono essere descritti scrivendone il nome e il tipo come normali variabili
+let func: (a: number, b: string) => void
+
+// il nome assegnato ad un parametro è completamente arbitrario e usato solo per documentare la funzione
+// in realtà quando si assegna una funzione si può rinominare il parametro arbitrariamente
+func = (x, y) => {
+    // questa definizione è valida per la dichiarazione di tipi precedente
+    // qui x sarà un numero e y una stringa
+}
+
+// allo stesso modo il return type non è strettamente vincolante quando è void, poiché javascript
+// ignorerà qualsiasi valore restituito se non usato
+func = (x, y) => {
+    // questa definizione è comunque valida
+    return "foo"
+}
+```
+
+```tsx
+// per quanto riguarda i tipi dei props, la dichiarazione del tipo di una funzione in questo modo è utile
+// qua non ci interessa definire tipi di parametri o del valore restituito
+let Button: FC<{
+    label: string
+    onClick?: () => void
+}>
+
+//...
+
+let Component: FC = () => (
+    <Button
+        label="ciao"
+        onClick={click => {
+            // click qui sarà di tipo any e typescipt darà errore ❌
+            return "ciao" // dato che il tipo restituito da onClick è void, return verrà ignorato in qualsiasi caso
+        }}
+    />
+)
+```
+
+```tsx
+// se si vuole fare in modo che venga passato qualcosa alla funzione, si può definire il tipo del parametro
+let Button: FC<{
+    label: string
+    onClick?: (e: React.MouseEvent) => void
+}>
+
+//...
+
+let Component: FC = () => (
+    <Button
+        label="ciao"
+        onClick={click => {
+            // Qui click sarà definito e di tipo React.MouseEvent, anche se nella dichiarazione
+            // di Button sopra è stato chiamato "e"
+        }}
+    />
+)
+```
+
+### Definizioni di componenti [#definizioni-di-componenti]
+
+```tsx
+// se si vuole passare qualche componente come prop, ci sono un paio di tipi che ci vengono in aiuto
+
+// un FunctionComponent (FC) ha come tipo di restituzione React.ReactElement, che è un tipo generico
+// per i componenti a cui possono essere passati props (di cui a loro volta si può definire il tipo)
+let Button: FC<{
+    label: string
+    icon: React.ReactElement<IconProps, any>
+}>
+
+// per componenti generici i cui props non sono importanti, si può usare JSX.Element, che è ugaule a
+// React.ReactElement<any, any>
+
+let Button: FC<{
+    label: string
+    icon: JSX.Element // più compatto ed inclusivo
+}>
+
+// ReactNode accetta tutto quello che è considerato un valido nodo di React, quindi componenti ma anche
+// array di componenti, o stringhe (che in react native sono validi nodi solo per <Text>)
+// può essere utilizzato in caso serva più flessibilità, ma in generale è meglio JSX.Element
+let Button: FC<{
+    label: string
+    node: React.ReactNode // questo accetta un po' qualsiasi cosa come nodo
+}>
+```
+
+### Altre definizioni con Unknown [#altre-definizioni-con-unknown]
+
+```ts
+// in caso si voglia definire qualche sorta di funzione che potrebbe potenzialmente accettare
+// qualsiasi tipo di parametro, è preferibile usare unknown al posto di any
+
+function log(x: any) {
+    // ❌ qui x sarà any, quindi qualsiasi parametro è accessibile anche se non esiste
+    console.log(x)
+    console.log(x.foo) // ⚠️ possibile errore di runtime
+}
+
+function log(x: unknown) {
+    // ✅ qui x sarà unknown, per accedere a parametri è necessario usare un type guard
+    console.log(x)
+    console.log(x.foo) // ⚠️ errore di compilazione, meglio
+}
+```
+
+
+# Components (/docs/archive/app/developer/frontend/usefulComponents)
+
+Toast
+
+- https://github.com/jeanverster/react-native-styled-toast
+
+Navigation
+
+- https://github.com/orjiAce/rn-slick-bottom-tabs?ref=reactnativeexample.com
+- https://github.com/mikalyh/react-navigation-tabbar-collection?ref=reactnativeexample.com
+- https://github.com/junhoyeo/react-native-bubble-tabbar
+
+Virtual Assistant
+
+- https://github.com/tabrezansari/React-Native-Virtual-Assistant
+
+Voice Recogniser
+
+- https://github.com/react-native-voice/voice#readme
+
+Shop per feature
+
+- https://github.com/raghiii/react-native-vertical-distribution
+
+Swipe for PoliTinder - PoliMeet
+
+- https://github.com/meteor-factory/react-native-tinder-swipe-cards
+
+Transition
+
+- https://github.com/catalinmiron/react-native-nav-transition
+
+Animated Icons
+
+- https://github.com/prscX/react-native-iconic
+
+Menu
+
+- https://github.com/geremih/react-native-circular-action-menu
+
+Intro
+
+- https://github.com/jacse/react-native-app-intro-slider
+
+Installed Icon Pack
+
+- https://github.com/oblador/react-native-vector-icons
+
+Search Bar
+
+- https://github.com/localz/react-native-searchbar
+
+Animation
+
+- https://github.com/lottie-react-native/lottie-react-native
+
+Maps
+
+- https://github.com/react-native-maps/react-native-maps
+
+Graph
+
+- https://github.com/margelo/react-native-graph?ref=reactnativeexample.com
+
+
+# diagrams (/docs/archive/app/developer/mermaid)
+
+Per la documentazione tecnica si può usare Markdown in combinazione con mermaid.js
+
+- [Come inserire diagrammi Mermaid nel GitHub-flavored Markdown](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/creating-diagrams#creating-mermaid-diagrams)
+- [Mermaid Class Diagrams](https://mermaid-js.github.io/mermaid/#/classDiagram)
+
+Esempio:
+
+````markdown
+```mermaid
+classDiagram
+
+class Classe {
+  Tipo prop
+  metodo(Tipo argomento): Tipo
+}
+
+class Tipo
+Classe *-- Tipo
+
+class Estensione {
+  Tipo altraProp
+}
+
+Estensione *-- Tipo
+Estensione <|-- Classe
+```
+````
+
+Risultato:
+
+```mermaid
+classDiagram
+
+class Classe {
+  Tipo prop
+  metodo(Tipo argomento): Tipo
+}
+
+class Tipo
+Classe *-- Tipo
+
+class Estensione {
+  Tipo altraProp
+}
+
+Estensione *-- Tipo
+Estensione <|-- Classe
+```
+
+
+# emoji (/docs/archive/app/emoji)
+
+Le emoji, se usate, sono consentite solo quelle di Unicode 11 in giù (11,10,9, ecc...) per questioni di retrocompatibilità.
+Sito ufficiale delle emoji di Unicode https://emojipedia.org/unicode-11.0/
+
+
+# Features App (in ordine di priorita') (/docs/archive/app/features)
+
+- Feed Notizie
+    - Notifiche da PoliAssocizioni, Polimi, etc...
+    - Welcome (con gruppi per semestre e anno)
+    - Link a Gruppi (con consigliati in base ai propri interessi)
+    - Ricerca Aule Libere con Navigatore (gps)
+    - Tol Project (con anche resoconto dei punteggi svolti e grafico dell'andamento dei progressi)
+    - Calendario (orari lezioni ed aule)
+    - Materiali Scaricabili da Gitlab e WeBeep
+    - Voto e commento professori
+    - Chat Bot (Polifemo) (server)
+
+# Features da approvare [#features-da-approvare]
+
+- PoliMeet (PoliTinder)
+
+# Features Backend [#features-backend]
+
+Lista delle API che servono
+
+## Api che ritorna le notizie [#api-che-ritorna-le-notizie]
+
+Parametri:
+
+- Data inizio pubblicazione notizie
+- Data fine pubblicazione notizie (opzionale, se non lo si mette vuol dire fino ad ora)
+- Filtro su autori
+- Filtro su categorie
+- Filtro su titolo
+
+## Api che ritorna i gruppi [#api-che-ritorna-i-gruppi]
+
+Parametri:
+
+- Nome gruppo (obbligatorio)
+- Anno scolastico
+- Tipo di Corso
+- Piattaforma
+- Lingua
+- Sede
+
+## Api che ritorna le aule libere [#api-che-ritorna-le-aule-libere]
+
+Parametri:
+
+- Data e ora inizio
+- Data e ora fine
+
+
+# PoliFemo (/docs/archive/app)
+
+ogni file deve essere leggibile dentro a VScode quindi bisogna usare md per tutti i documenti di testo
+se si utilizzano estensioni particolari che risulatno essenzali bisogna inserirle dentro a questo README nella sezione apposita.
+
+## Developer [#developer]
+
+## Design [#design]
+
+per visualizzare i colori nella cartella design\palette e' consigliato scaricare _Color Highlight_
+
+https://marketplace.visualstudio.com/items?itemName=naumovs.color-highlight
+
+
+# Archived Projects 🗃️ (/docs/archive)
+
+In this section, you will find documentations for archived projects and repositories.
+These projects are no longer actively maintained or have been deprecated. However,
+the documentation is preserved for reference purposes and can be valuable for
+understanding past developments and decisions.
+
+<Callout type="warning">
+
+None of these documents are actively maintained. The information provided may be
+outdated or inaccurate.
+
+Note that no modifications or updates will probably be made to these documents,
+and they might be removed in the future.
+
+</Callout>
+
+<Callout type="info">
+
+**THIS IS JUST A DOCUMENT DUMP**
+
+Please don't report issues or PRs on this section, we are already busy as it is 🙃
+
+</Callout>
+
+
+# Add a New Secret (/docs/infrastructure/Guides/add-a-new-secret)
+
+## Introduction [#introduction]
+
+Secrets are used to configure deployments with **sensitive** data like database login, API keys, and so on.  
+Secrets live in **Azure Key Vault** and never in Git. The
+[External Secrets Operator](https://external-secrets.io/) (ESO), running in the
+cluster, copies them into regular Kubernetes `Secret`s that your pods can use.
+
+We have two Key Vaults, one per trust boundary:
+
+| Key Vault | `ClusterSecretStore` | Contains | Namespaces allowed to read it |
+|-----------|---------------------|----------|-------------------------------|
+| `kv-pn-apps` | `kv-pn-apps` | Application secrets (DB passwords, API keys, OAuth clients, ...) | The app namespaces listed in the store |
+| `kv-pn-infra` | `kv-pn-infra` | Platform secrets (tunnel token, Flux webhook token, backup key, ...) | `cloudflared`, `flux-system` |
+
+ESO reads Key Vault through workload identity federation: no Azure password or
+key is stored in the cluster.
+
+<Callout type="tip">
+
+Whenever there is `<something>` in the code or in a command, that's a parameter you need to set.
+
+</Callout>
+
+## Basics [#basics]
+
+There are three required steps:
+
+1. Add the secret into the Key Vault
+2. Declare an `ExternalSecret` in the app folder
+3. Use the Kubernetes secret in the pod
+
+All the YAML lives in the app folder `apps/<namespace>/` of
+[polinetwork-cd](https://github.com/polinetworkorg/polinetwork-cd).
+
+### Add the secret into the Key Vault [#add-the-secret-into-the-key-vault]
+
+See [this section](#add-or-update-a-secret).
+
+<Callout type="important" title="Naming convention">
+
+Prefix the Key Vault secret name with the app that owns it, e.g. `backend-encryption-key`.
+Key Vault names allow only letters, digits and hyphens.
+
+</Callout>
+
+### Declare the `ExternalSecret` [#declare-the-externalsecret]
+
+Check if the app folder already contains an `external-secret.yaml`. If it does,
+just [add a new entry](#add-a-key-to-an-existing-externalsecret).
+
+Otherwise create it:
+
+```yaml title="apps/<namespace>/external-secret.yaml"
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: azure-kv                 # name of the ExternalSecret
+spec:
+  refreshInterval: 1h            # how often ESO re-reads Key Vault
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: kv-pn-apps
+  target:
+    name: azure-kv               # name of the Kubernetes Secret ESO creates
+    creationPolicy: Owner
+    deletionPolicy: Retain       # keep the Secret if the Key Vault secret is deleted
+  data:
+    - secretKey: <k8s-key>       # key inside the Kubernetes Secret
+      remoteRef:
+        key: <kv-secret-name>    # secret name in Key Vault
+```
+
+and add it to the app's `kustomization.yaml`:
+
+```yaml title="apps/<namespace>/kustomization.yaml"
+resources:
+  - namespace.yaml
+  # [!code ++]
+  - external-secret.yaml
+  - deployment.yaml
+```
+
+There is no need to set the namespace in the `ExternalSecret`: Kustomize sets it
+from the `namespace` field of `kustomization.yaml`.
+
+<Callout type="info">
+
+By convention, our apps call both the `ExternalSecret` and the resulting Secret
+`azure-kv`, a name inherited from the AKS setup.
+
+</Callout>
+
+### Allow the namespace to use the store [#allow-the-namespace-to-use-the-store]
+
+A `ClusterSecretStore` only serves the namespaces listed in its `conditions`.
+If your app is new, add its namespace to the `kv-pn-apps` store:
+
+```yaml title="infrastructure/secret-stores/cluster-secret-stores.yaml"
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: kv-pn-apps
+spec:
+  conditions:
+    - namespaces:
+        - auth
+        - backend
+        # [!code ++]
+        - <namespace>
+        ...
+```
+
+Skip this and the `ExternalSecret` stays `NotReady` with an error saying the
+store doesn't allow the namespace.
+
+<Callout type="danger">
+
+Don't add app namespaces to `kv-pn-infra`. It holds the secrets that run the
+platform itself.
+
+</Callout>
+
+### Add a key to an existing `ExternalSecret` [#add-a-key-to-an-existing-externalsecret]
+
+Append an entry under `data`:
+
+```yaml title="apps/<namespace>/external-secret.yaml"
+  data:
+    - secretKey: db-pass
+      remoteRef:
+        key: postgres-root-password
+    # [!code ++:3]
+    - secretKey: <k8s-key>
+      remoteRef:
+        key: <kv-secret-name>
+```
+
+## Use the secret in a pod [#use-the-secret-in-a-pod]
+
+### As an environment variable [#as-an-environment-variable]
+
+```yaml title="apps/<namespace>/deployment.yaml"
+      containers:
+        - name: <container-name>
+          image: <image>
+          # [!code ++:6]
+          env:
+            - name: EXAMPLE_SECRET          # env variable name
+              valueFrom:
+                secretKeyRef:
+                  name: azure-kv            # Kubernetes Secret name (target.name)
+                  key: <k8s-key>            # secretKey in the ExternalSecret
+```
+
+### As a file (deprecated) [#as-a-file-deprecated]
+
+<Callout type="warning" title="Deprecated">
+
+Use [environment variables](#as-an-environment-variable) instead. Mounting the
+Secret as a volume was required by the old CSI driver; with ESO it's only extra
+YAML, and no app does it anymore. Keep it for an app that can only read its
+configuration from files.
+
+</Callout>
+
+```yaml title="apps/<namespace>/deployment.yaml"
+    spec:
+      containers:
+        - name: <container-name>
+          image: <image>
+          # [!code ++:4]
+          volumeMounts:
+            - name: secrets
+              mountPath: /mnt/secrets       # one file per key in this directory
+              readOnly: true
+      # [!code ++:4]
+      volumes:
+        - name: secrets
+          secret:
+            secretName: azure-kv
+```
+
+## Deploy and check [#deploy-and-check]
+
+Open a PR into polinetwork-cd. Once it's merged, Flux applies it. Then, from the node:
+
+```sh
+# Ready=True and SecretSynced means ESO copied the secret
+kubectl get externalsecret -n <namespace>
+
+# The keys in the Kubernetes Secret (values are not printed)
+kubectl describe secret azure-kv -n <namespace>
+```
+
+## Updating a secret value [#updating-a-secret-value]
+
+ESO re-reads Key Vault every `refreshInterval` (1 hour). To pick up a new value
+immediately, force a sync:
+
+```sh
+kubectl annotate externalsecret azure-kv -n <namespace> \
+  force-sync="$(date +%s)" --overwrite
+```
+
+Environment variables are read only when a container starts, so restart the app:
+
+```sh
+kubectl rollout restart deployment/<deployment-name> -n <namespace>
+```
+
+(Secrets mounted as files are updated in place after a short delay, but the app
+has to re-read them.)
+
+## Key Vault management [#key-vault-management]
+
+You need the Azure CLI, logged in with an account that has the
+**Key Vault Secrets Officer** role on the vault.
+
+### Add or update a secret [#add-or-update-a-secret]
+
+You can add (or update) a secret with the following command:
+
+```sh
+az keyvault secret set --vault-name "kv-pn-apps" --name "<secret-name>" --value "<secret-value>"
+```
+
+<Callout type="tip">
+
+If the secret value is too long or you don't want to copy/paste in terminal (and
+leave it in your shell history) you can use a file instead.
+
+1. Paste the secret value into a text file (no extension or ".txt" is valid) on a **single line**
+2. Run the following command
+
+   ```sh
+   az keyvault secret set --vault-name "kv-pn-apps" --name "<secret-name>" --file "<filename>"
+   ```
+
+3. Delete the file
+
+
+</Callout>
+
+### Delete a secret [#delete-a-secret]
+
+Remove it from every `ExternalSecret` first, otherwise the `ExternalSecret` turns
+`NotReady`. Then delete it with:
+
+```sh
+az keyvault secret delete --vault-name "kv-pn-apps" --name "<secret-name>"
+```
+
+After the deletion, the secret remains in a `Recoverable State` for **90 days**.  
+During this period the secret can be recovered with the following command:
+
+```sh
+az keyvault secret recover --vault-name "kv-pn-apps" --name "<secret-name>"
+```
+
+<Callout type="warning">
+
+Both vaults have **purge protection** enabled: a deleted secret can't be purged
+before its 90 days are over, and its name can't be reused in the meantime unless
+you recover it.
+
+</Callout>
+
+<Callout type="note">
+
+To **update/re-set** that secret, during the 90 days retention period, you must recover it first,
+then run the command to update it
+
+If you try to `set` a secret that has been deleted within the last 90 days without restoring it first, you get the following error:
+
+```sh
+# [!code error:6]
+(Conflict) Secret <secret-name> is currently in a deleted but recoverable state, and its name cannot be reused; in this state, the secret can only be recovered or purged.
+Code: Conflict
+Message: Secret <secret-name> is currently in a deleted but recoverable state, and its name cannot be reused; in this state, the secret can only be recovered or purged.
+Inner error: {
+    "code": "ObjectIsDeletedButRecoverable"
+}
+```
+
+
+</Callout>
+
+## Example [#example]
+
+A complete app that reads one secret, `my-app-api-key`, from `kv-pn-apps`:
+
+```yaml title="apps/my-app/external-secret.yaml" lineNumbers
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: azure-kv
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: kv-pn-apps
+  target:
+    name: azure-kv
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  data:
+    - secretKey: api-key
+      remoteRef:
+        key: my-app-api-key
+```
+
+```yaml title="apps/my-app/deployment.yaml" lineNumbers
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+        - name: my-app
+          image: ghcr.io/polinetworkorg/my-app:latest
+          env:
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: azure-kv
+                  key: api-key
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+```
+
+```yaml title="apps/my-app/kustomization.yaml" lineNumbers
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: my-app
+
+resources:
+  - namespace.yaml
+  - external-secret.yaml
+  - deployment.yaml
+```
+
+Plus `my-app` in the `kv-pn-apps` store conditions, as shown [above](#allow-the-namespace-to-use-the-store).
+
+
+# Add Storage (/docs/infrastructure/Guides/add-storage)
+
+## Core Concepts [#core-concepts]
+
+Many applications and services need a physical volume or storage to store their data or configuration.  
+On K3s, volumes are plain directories on the node's data disks, created on demand by the
+[local-path provisioner](https://github.com/rancher/local-path-provisioner) when a
+[PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes) asks for one.
+We replaced Longhorn and the Azure Managed Disk volumes we used on AKS with it.
+
+There are two storage classes, one per data disk:
+
+| Storage class | Disk | Path on the node | Use it for |
+|---------------|------|------------------|------------|
+| `fast` | Premium SSD v2, 64 GB | `/srv/fast/volumes/<namespace>/<pvc>/` | Latency-sensitive databases (today: PostgreSQL and the Redis instances) |
+| `standard` (default) | Standard SSD, 128 GB | `/srv/standard/volumes/<namespace>/<pvc>/` | Everything else (today: InfluxDB, Prometheus, Grafana, Uptime Kuma) |
+
+<Callout type="important">
+
+- **The size is not enforced.** `storage: 4Gi` in a PVC is a label, not a quota: a volume can
+  grow until the whole disk is full, and then every app on that disk breaks.
+  Check the free space first, and keep an eye on the `PersistentVolumeHigh` and
+  `NodeDiskHigh` alerts.
+- **`ReadWriteOnce` doesn't mean one pod.** It limits a volume to one node, and we only
+  have one node: two pods can mount the same volume and write to it at the same time.
+  Make sure only one pod at a time uses it (see `Recreate` below).
+- **Volumes are retained.** Deleting a PVC doesn't delete its directory (`reclaimPolicy: Retain`).
+
+</Callout>
+
+## Add a volume [#add-a-volume]
+
+First of all, [SSH into the node](/docs/infrastructure/getting-started/setup#cloudflare-warp--ssh) and check
+how much space is available on the disk you want to use:
+
+```sh
+df -h /srv/fast /srv/standard
+```
+
+Once you verified you have sufficient space available, add the PVC to the app manifest:
+
+```yaml title="apps/<namespace>/deployment.yaml"
+# [!code ++:13]
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: <name>-pvc
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled   # never let Flux delete the data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: <storage-class>
+  resources:
+    requests:
+      storage: <size>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: <name>
+spec:
+  replicas: 1
+  # [!code ++:2]
+  strategy:
+    type: Recreate      # stop the old pod before starting the new one
+  selector:
+    matchLabels:
+      app: <name>
+  template:
+    metadata:
+      labels:
+        app: <name>
+    spec:
+      containers:
+        - name: <name>
+          image: <image>
+          # [!code ++:3]
+          volumeMounts:
+            - name: data           # Name of the volume defined below
+              mountPath: /app/data # Where you need to mount the volume
+      # [!code ++:4]
+      volumes:
+        - name: data               # it can be whatever you want
+          persistentVolumeClaim:
+            claimName: <name>-pvc  # the name of the PVC defined above
+```
+
+Parameters:
+- `namespace` k8s namespace (set by the app's `kustomization.yaml`)
+- `name` should identify the app where the volume will be used
+- `storage-class` `fast` or `standard` (see [the table above](#core-concepts))
+- `size` expected size of the volume. Check [resource units](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#meaning-of-memory).
+    e.g. `300M`, `1Gi`, `200Mi`
+
+<Callout type="warning" title="Both are required">
+
+- The `kustomize.toolkit.fluxcd.io/prune: disabled` annotation keeps Flux from deleting the
+  PVC if it disappears from Git (e.g. a bad refactor). CI rejects PVCs without it.
+- The `Recreate` strategy avoids two pods writing to the same volume during a rollout.
+
+</Callout>
+
+The volume is created when the first pod using it is scheduled, so the PVC stays
+`Pending` until then: that's expected.
+
+<Callout type="tip" title="File permissions">
+
+local-path directories are owned by `root`. If your container runs as a non-root
+user, set `securityContext.fsGroup` on the pod to the user's group (see `apps/redis`
+for an example).
+
+</Callout>
+
+## Back it up [#back-it-up]
+
+Volumes are **not** backed up automatically. The application backup on the node
+only includes the databases and directories it knows about. If the new volume
+holds data we can't afford to lose, add it to the backup script: see
+[Backups](/docs/infrastructure/Guides/backups#adding-a-new-app).
+
+## Inspecting a volume [#inspecting-a-volume]
+
+Since a volume is just a directory, you can look at it from the node:
+
+```sh
+sudo ls -la /srv/<fast|standard>/volumes/<namespace>/<name>-pvc/
+```
+
+<Callout type="danger">
+
+Don't edit files of a running database from the node. Stop the app first, or go
+through the app itself.
+
+</Callout>
+
+
+# Backups (/docs/infrastructure/Guides/backups)
+
+## Overview [#overview]
+
+Two systemd timers on the node, installed by Ansible (`ansible/roles/backup`), back up the cluster:
+
+| Backup | When (UTC) | Contents |
+|--------|------------|----------|
+| **Applications** (`k3s-application-backup`) | Every 6 hours (00:45, 06:45, 12:45, 18:45) | PostgreSQL (`pg_dumpall`, all databases and roles), Redis (`redis` and `bot-ts` RDB snapshots), InfluxDB (`influx backup`), Uptime Kuma and Grafana (SQLite databases and files) |
+| **Control plane** (`k3s-control-plane-backup`) | Daily at 02:15 | The K3s datastore (`state.db`), the K3s server token and `config.yaml` |
+
+Each run:
+
+1. takes consistent online copies (no app is stopped);
+2. packs them in a `.tar.gz` with a `SHA256SUMS` file and encrypts it with
+   [age](https://age-encryption.org/);
+3. uploads it to the private `backups` container of the `polinetworkbackups`
+   storage account, using the `id-k3s-backup` managed identity;
+4. publishes its success time to Prometheus.
+
+<Callout type="important" title="Encryption">
+
+The node only has the age **public** key. The private key (the "identity") is the
+secret `backup-age-identity` in the `kv-pn-infra` Key Vault, and it must never be
+copied to the node. Without it, the backups can't be read.
+
+</Callout>
+
+## Retention [#retention]
+
+| Where | Path | Kept for |
+|-------|------|----------|
+| Node | `/srv/standard/backups/k3s-applications/`, `/srv/standard/backups/k3s-control-plane/` | 7 days |
+| Blob Storage | `backups/k3s-applications/k3s01/`, `backups/k3s-control-plane/k3s01/` | 90 days, immutable for the first 30 |
+
+The storage account only accepts traffic from the K3s subnet, so download backups from the node.
+
+## Monitoring [#monitoring]
+
+The `BackupStale` alert fires on Telegram when there has been no successful
+application backup for 7 hours or no control-plane backup for 26 hours.
+`BackupMetricsMissing` fires if the metrics disappear altogether.
+
+From the node:
+
+```sh
+# Next and last runs
+systemctl list-timers 'k3s-*-backup.timer'
+
+# Logs of the last run
+sudo journalctl -u k3s-application-backup.service -n 50
+
+# Run a backup now
+sudo systemctl start k3s-application-backup.service
+```
+
+## Adding a new app [#adding-a-new-app]
+
+Volumes are not backed up automatically. If you add an app with data worth keeping
+(see [Add Storage](/docs/infrastructure/Guides/add-storage)), add it to
+`ansible/roles/backup/templates/k3s-application-backup.sh.j2` in polinetwork-cd, using
+the right tool for the data:
+
+- a database: its own dump/backup command, through `kubectl exec` (like PostgreSQL and InfluxDB);
+- an SQLite file: the `sqlite_backup` helper, which takes a consistent copy and archives
+  the other files in the volume;
+- Redis: the `redis_snapshot` helper.
+
+Then run the playbook (see [K3s Node](/docs/infrastructure/getting-started/cloud-infrastructure/k3s-node#running-the-playbooks)):
+`verify.yml` takes a fresh backup and checks it.
+
+## Restoring [#restoring]
+
+<Callout type="danger">
+
+Restoring overwrites live data. Agree on it with the Direttivo first, and take a
+fresh backup right before (`sudo systemctl start k3s-application-backup.service`)
+so you can go back.
+
+</Callout>
+
+### 1. Get the archive [#1-get-the-archive]
+
+The last 7 days are on the node, in `/srv/standard/backups/k3s-applications/`,
+readable only by root. Copy the one you need to your home:
+
+```sh
+sudo cp /srv/standard/backups/k3s-applications/<archive>.tar.gz.age ~
+sudo chown pnadmin ~/<archive>.tar.gz.age
+```
+
+For older backups, list and download them from Blob Storage on the node, with the
+backup identity (its client ID is `backup_identity_client_id` in `ansible/vars/main.yml`):
+
+```sh
+TOKEN=$(curl -s -H Metadata:true \
+  "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2019-08-01&resource=https%3A%2F%2Fstorage.azure.com%2F&client_id=<backup-identity-client-id>" \
+  | jq -r .access_token)
+
+# List
+curl -s -H "Authorization: Bearer $TOKEN" -H "x-ms-version: 2023-11-03" \
+  "https://polinetworkbackups.blob.core.windows.net/backups?restype=container&comp=list&prefix=k3s-applications/k3s01/" \
+  | grep -o '<Name>[^<]*</Name>'
+
+# Download
+curl -s -H "Authorization: Bearer $TOKEN" -H "x-ms-version: 2023-11-03" \
+  -o ~/<archive>.tar.gz.age \
+  "https://polinetworkbackups.blob.core.windows.net/backups/k3s-applications/k3s01/<archive>.tar.gz.age"
+```
+
+### 2. Decrypt it on your machine [#2-decrypt-it-on-your-machine]
+
+Copy the encrypted archive to your machine and decrypt it there with
+[age](https://github.com/FiloSottile/age#installation) and the identity from Key Vault:
+
+```sh
+scp pnadmin@10.43.1.4:<archive>.tar.gz.age .
+
+# umask 077: the identity file is readable only by you
+(umask 077; az keyvault secret show --vault-name kv-pn-infra --name backup-age-identity \
+  --query value -o tsv > age-identity.txt)
+
+mkdir restore
+age --decrypt --identity age-identity.txt <archive>.tar.gz.age | tar -xz -C restore
+(cd restore && sha256sum -c SHA256SUMS)
+
+rm age-identity.txt
+```
+
+`restore/` now contains `postgres-dumpall.sql`, `redis.rdb`, `bot-ts-redis.rdb`,
+`influxdb-backup.tar`, `uptime-kuma.db`, `grafana.db` and the `*-files.tar` archives.
+
+<Callout type="caution">
+
+These files hold personal data and credentials in clear text. Delete them as soon as
+you're done.
+
+</Callout>
+
+### 3. Restore the data [#3-restore-the-data]
+
+For PostgreSQL, the dump recreates every database (`--clean --if-exists`), so you can
+stream it into the running server:
+
+```sh
+ssh pnadmin@10.43.1.4 \
+  "k3s kubectl exec -i -n postgres deploy/postgres -- sh -c 'psql --username=\"\$POSTGRES_USER\" --dbname=postgres'" \
+  < restore/postgres-dumpall.sql
+```
+
+For the other services, stop the app (`kubectl scale --replicas=0`), put the files back
+in its volume under `/srv/<fast|standard>/volumes/<namespace>/<pvc>/`, and scale it up
+again. Follow the upstream docs for
+[Redis](https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/) and
+[InfluxDB](https://docs.influxdata.com/influxdb/v2/admin/backup-restore/restore/).
+
+The control-plane backup is only needed to rebuild the node from scratch: it restores
+the K3s datastore, including the service-account signing key that Azure workload
+identity trusts.
+
+
+# Deploy a New App (/docs/infrastructure/Guides/deploy-a-new-app)
+
+## Introduction [#introduction]
+
+We use k8s to deploy our applications, on our [K3s node](/docs/infrastructure/getting-started/cloud-infrastructure/k3s-node).  
+Each app is a folder of plain k8s manifests in the
+[polinetwork-cd](https://github.com/PoliNetworkOrg/polinetwork-cd/) repository, tied
+together with [Kustomize](https://kustomize.io/). [Helm Charts](https://helm.sh/docs/topics/charts/)
+are possible too, through a Flux `HelmRelease` (see `infrastructure/external-secrets` for an example).
+
+You don't deploy from your machine: you open a PR, and once it's merged into `main`,
+Flux applies it.  
+Check [minikube](https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download) or [K3s](https://docs.k3s.io/quick-start) to run a k8s cluster on your machine for testing purposes.
+
+<Callout type="note" title="CD">
+
+To deploy our applications, we use [Flux](https://fluxcd.io/flux/) syncing the
+`clusters/k3s` folder of the `main` branch of
+[polinetwork-cd](https://github.com/PoliNetworkOrg/polinetwork-cd/).
+
+For more info, check out [Flux](/docs/infrastructure/getting-started/cloud-infrastructure/flux).
+
+</Callout>
+
+## Procedure [#procedure]
+
+1. Publish a [Docker image](https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-an-image/) with an **`arm64`** variant
+2. [Create the app folder](#create-the-app-folder)
+3. [Register the app with Flux](#register-the-app-with-flux)
+4. Optionally, [publish it on a domain](#publish-it-on-a-domain), [add secrets](/docs/infrastructure/Guides/add-a-new-secret), [add storage](/docs/infrastructure/Guides/add-storage) and [enable automatic image updates](#automatic-image-updates)
+5. Open a PR into polinetwork-cd, wait for CI, merge
+6. Monitor the deploy on the [Flux Web UI](https://flux.polinetwork.org)
+
+<Callout type="important" title="ARM64 images">
+
+The node is ARM64. An image built only for `amd64` can't run there, and the pod fails
+with `exec format error`. Build a multi-arch image (see the
+[web workflow](https://github.com/PoliNetworkOrg/web/blob/main/.github/workflows/docker.yml)
+for an example), or check that the third-party image you use publishes `linux/arm64`.
+
+</Callout>
+
+### Create the app folder [#create-the-app-folder]
+This is the crucial part, so make sure to follow it step-by-step.
+1. Clone [polinetwork-cd](https://github.com/PoliNetworkOrg/polinetwork-cd) repo
+2. Create a new branch (named as you like, e.g. `mc-server-deploy`)
+3. Create this minimal file structure:
+```
+🗀 apps
+└─ 🗀 <k8s-namespace>
+   ├── kustomization.yaml
+   ├── namespace.yaml
+   └── deployment.yaml
+```
+
+<Callout type="info">
+
+The `<k8s-namespace>` should be a slug (lowercase words separated by hyphens) identifier of the application/service you want to deploy.  
+
+Use the same `<k8s-namespace>` value for the folder name, the `Namespace` resource and
+the `namespace` field of `kustomization.yaml`. You don't need to write the namespace in
+the other manifests: Kustomize adds it.
+
+</Callout>
+
+```yaml title="apps/<k8s-namespace>/kustomization.yaml"
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: <k8s-namespace>
+
+resources:
+  - namespace.yaml
+  - deployment.yaml
+```
+
+```yaml title="apps/<k8s-namespace>/namespace.yaml"
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: <k8s-namespace>
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+```
+
+The `prune: disabled` annotation keeps Flux from deleting the namespace, and with it
+everything inside, if the app is removed from Git by mistake.
+
+```yaml title="apps/<k8s-namespace>/deployment.yaml"
+apiVersion: v1
+kind: Service
+metadata:
+  name: <app>-service
+spec:
+  selector:
+    app: <app>
+  ports:
+    - name: http
+      port: <port>
+      targetPort: <port>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: <app>
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0   # keep the old pod until the new one is ready
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: <app>
+  template:
+    metadata:
+      labels:
+        app: <app>
+    spec:
+      containers:
+        - name: <app>
+          image: ghcr.io/polinetworkorg/<image>:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: <port>
+          readinessProbe:
+            tcpSocket:
+              port: <port>
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: <port>
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+```
+
+A few rules we follow for every app:
+
+- **Requests and limits.** Everything shares one node, so every container declares
+  its memory request and limit. Base the numbers on what the app actually uses
+  (`kubectl top pods`).
+- **Probes.** The readiness probe is what makes rolling updates safe: without it,
+  Kubernetes kills the old pod before the new one is serving.
+- **Apps with a volume** use `strategy: Recreate` instead (see [Add Storage](/docs/infrastructure/Guides/add-storage)).
+- Apps talk to each other through their Service:
+  `http://<service>.<namespace>.svc.cluster.local:<port>`.
+
+### Register the app with Flux [#register-the-app-with-flux]
+
+Flux only deploys the apps listed in `clusters/k3s/apps/`. Create a Flux
+`Kustomization` for the app:
+
+```yaml title="clusters/k3s/apps/<k8s-namespace>.yaml"
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: <k8s-namespace>
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: infrastructure-secret-stores
+    - name: infrastructure-storage
+    - name: infrastructure-traefik
+  interval: 30m
+  retryInterval: 1m
+  timeout: 5m
+  prune: true
+  wait: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./apps/<k8s-namespace>
+```
+
+If the app needs another app to be up first (e.g. a database), add it to
+`dependsOn` (e.g. `- name: postgres`).
+
+Then add it to the list:
+
+```yaml title="clusters/k3s/apps/kustomization.yaml"
+resources:
+  - admin.yaml
+  ...
+  # [!code ++]
+  - <k8s-namespace>.yaml
+```
+
+If you want automatic image updates, write a `ResourceSet` instead of this
+`Kustomization`: see [below](#automatic-image-updates).
+
+### Publish it on a domain [#publish-it-on-a-domain]
+
+Public traffic arrives through the Cloudflare Tunnel to Traefik, which routes it by
+hostname. Two things are needed.
+
+1. An `Ingress` in the app folder (and in `kustomization.yaml`):
+
+```yaml title="apps/<k8s-namespace>/ingress.yaml"
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: <app>
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: <hostname>.polinetwork.org
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: <app>-service
+                port:
+                  number: <port>
+```
+
+2. A public hostname on the **`k3s01`** tunnel in the Cloudflare Zero Trust dashboard
+   (*Networks → Tunnels*), pointing to Traefik like the existing hostnames. The tunnel
+   is managed from the dashboard, not from Git, so ask someone in the Direttivo to add it.
+
+Cloudflare terminates HTTPS, so the `Ingress` only needs the plain `web` entrypoint:
+no certificates in the cluster.
+
+## Automatic image updates [#automatic-image-updates]
+Flux can redeploy the app every time a new `latest` image is published, pinning the
+image digest (see [how it works](/docs/infrastructure/getting-started/cloud-infrastructure/flux#automatic-image-updates)).  
+This is an optional feature: the alternative is a fixed version or digest in
+`deployment.yaml` (e.g. `nginx:1.27.4`), bumped with a PR.
+
+<Callout type="warning">
+
+Consider the following manifest:
+```yaml
+      containers:
+        - name: nginx
+          image: nginx:latest
+```
+the image would **not update** if you **don't follow** this guide, even though there is `latest`:
+the node already has an image called `nginx:latest` and has no reason to pull it again.
+
+</Callout>
+
+The image must be **public** on GHCR: neither Flux nor the node use registry credentials.
+Using the GHCR package `ghcr.io/polinetworkorg/<image>`:
+
+1. Add a provider that tracks its `latest` tag:
+
+```yaml title="infrastructure/image-automation/image-providers.yaml"
+---
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSetInputProvider
+metadata:
+  name: <app>-image
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcileEvery: "6h"
+spec:
+  type: OCIArtifactTag
+  url: oci://ghcr.io/polinetworkorg/<image>
+  filter:
+    includeTag: '^latest$'
+    limit: 1
+```
+
+2. Let the GitHub webhook trigger it:
+
+```yaml title="infrastructure/image-automation/receiver.yaml"
+  resources:
+    ...
+    # [!code ++:3]
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: ResourceSetInputProvider
+      name: <app>-image
+```
+
+3. Replace `clusters/k3s/apps/<k8s-namespace>.yaml` with a `ResourceSet` that renders the
+   same Kustomization, plus an `images` override with the digest:
+
+```yaml title="clusters/k3s/apps/<k8s-namespace>.yaml"
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: <k8s-namespace>
+  namespace: flux-system
+spec:
+  inputStrategy:
+    name: Permute
+  inputsFrom:
+    - kind: ResourceSetInputProvider
+      name: <app>-image
+  resources:
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      metadata:
+        name: <k8s-namespace>
+        namespace: flux-system
+        annotations:
+          # Never garbage-collect the app if the provider exports no inputs.
+          fluxcd.controlplane.io/prune: disabled
+      spec:
+        dependsOn:
+          - name: infrastructure-secret-stores
+          - name: infrastructure-storage
+          - name: infrastructure-traefik
+        interval: 30m
+        retryInterval: 1m
+        timeout: 5m
+        prune: true
+        wait: true
+        sourceRef:
+          kind: GitRepository
+          name: flux-system
+        path: ./apps/<k8s-namespace>
+        # [!code ++:4]
+        images:
+          - name: ghcr.io/polinetworkorg/<image>
+            newTag: << inputs.<app>_image.tag | quote >>
+            digest: << inputs.<app>_image.digest | quote >>
+```
+
+<Callout type="caution" title="Input names">
+
+The inputs are named after the provider, with hyphens turned into underscores:
+the provider `bot-ts-image` becomes `inputs.bot_ts_image`.
+
+</Callout>
+
+In `deployment.yaml`, keep `image: ghcr.io/polinetworkorg/<image>:latest`: the `name`
+under `images` must match it exactly, and Flux replaces it with the pinned digest.
+See `clusters/k3s/apps/web.yaml` for a complete example.
+
+## Options [#options]
+These are some useful operations on existing apps.
+
+### Disable an app [#disable-an-app]
+To stop an app temporarily, **suspend** its Kustomization in the
+[Flux Web UI](https://flux.polinetwork.org) and scale it down from the node:
+
+```sh
+kubectl scale deployment/<app> -n <k8s-namespace> --replicas=0
+```
+
+To bring it back, **resume** the Kustomization: Flux restores the replicas from Git.
+
+### Remove an app [#remove-an-app]
+1. Remove `<k8s-namespace>.yaml` from `clusters/k3s/apps/kustomization.yaml` and delete the
+   file and the `apps/<k8s-namespace>/` folder. Remove its provider and receiver entry too,
+   if it had automatic image updates.
+2. Once merged, Flux deletes the app's resources, except the ones annotated with
+   `prune: disabled`: the namespace, the PVCs and, for apps with automatic image
+   updates, the generated Kustomization. Delete those by hand from the node once you're
+   sure the data is not needed:
+
+```sh
+kubectl delete kustomization <k8s-namespace> -n flux-system   # only for ResourceSet apps
+kubectl delete namespace <k8s-namespace>
+```
+
+Volume directories stay on disk anyway (`reclaimPolicy: Retain`), under
+`/srv/<fast|standard>/volumes/<k8s-namespace>/`.
+
+<Callout type="info">
+
+The `config.json` files with `"disabled": true` you may find at the root of polinetwork-cd
+belong to the old ArgoCD setup. Flux doesn't read them.
+
+</Callout>
+
+
+# Intro (/docs/infrastructure/Introduction)
+
+Let's discover **PoliNetwork's Infrastructure in less than 5 minutes**.
+
+## Getting Started [#getting-started]
+
+### Where [#where]
+
+Our infrastructure is deployed on Azure West Europe (Amsterdam).
+The Azure resources are described in Terraform (IaC) in the
+[terraform](https://github.com/polinetworkorg/terraform) repository.
+
+### What [#what]
+
+Production runs on **K3s**, a lightweight Kubernetes distribution, installed on
+a single Azure ARM64 VM called `k3s01`. Around it there are a few Azure services
+(Key Vault, Managed Disks, Blob Storage, Entra ID) and Cloudflare, which
+publishes our websites through a tunnel and gives us SSH access to the VM.
+
+Three layers, three tools:
+
+| Layer | Tool | Repository |
+|-------|------|------------|
+| Azure resources (VM, disks, network, Key Vaults, identities) | Terraform | [terraform](https://github.com/polinetworkorg/terraform) |
+| The VM itself (disks, firewall, K3s, backups) | Ansible | [polinetwork-cd/ansible](https://github.com/polinetworkorg/polinetwork-cd/tree/main/ansible) |
+| Everything running inside Kubernetes | Flux (GitOps) | [polinetwork-cd](https://github.com/polinetworkorg/polinetwork-cd) |
+
+### Why [#why]
+
+Why Kubernetes on a single VM instead of plain Docker?
+Kubernetes gives us declarative deployments, rolling updates, health checks and
+per-application resource limits. Flux keeps the cluster in sync with Git, so the
+`polinetwork-cd` repository is always the source of truth for what is running.
+
+Why K3s instead of a managed cluster?
+Until October 2026 we ran on AKS (Azure Kubernetes Service). K3s gives us the
+same Kubernetes API on one VM that we fully control and size ourselves, and it
+drops our dependency on AKS-specific add-ons (Azure CSI drivers, Longhorn, ArgoCD).
+
+<Callout type="note" title="Legacy AKS">
+
+The AKS cluster `aks-polinetwork` is still defined in the `environments/legacy`
+Terraform root, but no production workload runs on it anymore.
+If you find instructions mentioning `az aks get-credentials`, ArgoCD,
+`SecretProviderClass` or Longhorn (e.g. in old READMEs), they refer to the AKS setup.
+
+</Callout>
+
+## About this documentation [#about-this-documentation]
+
+<Callout type="important">
+
+Most of the docs explain procedures with `kubectl`, which you run on the K3s node
+over SSH, and with the Azure CLI, which you use for Key Vault secrets.
+Make sure to [set up your access](/docs/infrastructure/getting-started/setup) to follow along.
+
+</Callout>
+
+The best place to start is going through the [Getting Started](/docs/infrastructure/getting-started/setup) section to get a high level overview of how things are organized.  
+If you're looking for a guide on how to achieve a specific outcome, you can look in the [Guides](/docs/infrastructure/Guides/deploy-a-new-app).
+
+
+# Flux (/docs/infrastructure/getting-started/cloud-infrastructure/flux)
+
+## What is Flux? [#what-is-flux]
+
+[Flux](https://fluxcd.io/) is a GitOps tool: it runs inside the cluster, watches a
+Git repository and applies whatever it finds there, over and over. If someone
+changes a resource by hand, Flux puts it back the way Git says. It replaced the
+ArgoCD instance we had on AKS.
+
+Ours is installed by Ansible through the
+[Flux Operator](https://fluxcd.control-plane.io/operator/), and it syncs the
+**`main`** branch of
+[polinetwork-cd](https://github.com/polinetworkorg/polinetwork-cd), starting
+from the `clusters/k3s` folder.
+
+<Callout type="important">
+
+Merging to `main` in polinetwork-cd **is** deploying to production.
+Never `kubectl apply` or `kubectl edit` a resource that Flux manages: Flux reverts
+it at the next reconciliation.
+
+</Callout>
+
+## Repository layout [#repository-layout]
+
+```bash
+📁 polinetworkorg/polinetwork-cd/
+ ├─ 📁 ansible/                 # Host configuration (see K3s Node)
+ ├─ 📁 clusters/k3s/            # Entry point: one Flux Kustomization per component
+ │   ├─ infrastructure-*.yaml   # Platform components
+ │   └─ 📁 apps/                # One file per app + kustomization.yaml listing them
+ ├─ 📁 infrastructure/          # Manifests of the platform components
+ ├─ 📁 apps/                    # Manifests of the apps, one folder per namespace
+ │   ├─ 📁 backend/
+ │   ├─ 📁 web/
+ │   └─ ...
+ └─ 📁 tests/                   # Manifest checks run in CI
+```
+
+Folders at the root of the repository (`bot-prod/`, `bot-rooms/`, `mariadb/`, ...)
+are leftovers from the AKS era, all disabled. Flux ignores them.
+
+### `clusters/k3s` [#clustersk3s]
+
+Each file here is a Flux
+[`Kustomization`](https://fluxcd.io/flux/components/kustomize/kustomizations/)
+that points to one folder of `infrastructure/` or `apps/`. It also sets:
+
+- `dependsOn`: what must be ready first. Apps wait for the secret stores, storage
+  and Traefik; `backend` also waits for `postgres` and `redis`.
+- `prune: true`: a resource removed from Git is deleted from the cluster.
+- `wait: true`: the Kustomization is ready only when all its resources are healthy.
+- `interval: 30m`: a full reconciliation at least every 30 minutes, even if Git
+  didn't change.
+
+`clusters/k3s/apps/kustomization.yaml` lists the apps Flux runs. An app file
+that is not listed there does nothing.
+
+### Platform components (`infrastructure/`) [#platform-components-infrastructure]
+
+| Component | What it does |
+|-----------|--------------|
+| `security` | Admission policies (no host namespaces, no pods as `keyvault-reader`) |
+| `storage` | [local-path provisioner](https://github.com/rancher/local-path-provisioner) and the `fast` / `standard` storage classes |
+| `traefik` | Makes the bundled Traefik a `ClusterIP` service |
+| `external-secrets` | [External Secrets Operator](https://external-secrets.io/), installed with Helm |
+| `secret-stores` | The `kv-pn-apps` and `kv-pn-infra` `ClusterSecretStore`s |
+| `cloudflared` | The Cloudflare Tunnel connector (2 replicas) |
+| `image-automation` | Detects new `latest` images on GHCR (see below) |
+| `node-exporter` | Node metrics for Prometheus |
+| `flux-web` | The Flux Web UI at [flux.polinetwork.org](https://flux.polinetwork.org) |
+
+## Automatic image updates [#automatic-image-updates]
+
+Most of our apps are deployed from the `latest` tag of an image on
+[GHCR](https://github.com/orgs/PoliNetworkOrg/packages). A tag can point to a
+different image over time, so Flux resolves it to a **digest** and deploys that
+digest. When the digest changes, the app rolls out the new image.
+
+```mermaid
+flowchart LR
+  ci[App CI pushes :latest] --> gh[GitHub package event]
+  gh -- webhook --> rcv[Flux Receiver]
+  rcv --> prov[ResourceSetInputProvider<br/>resolves latest to a digest]
+  prov --> rs[ResourceSet<br/>renders the app Kustomization]
+  rs --> app[Deployment rolls out]
+```
+
+The pieces, all in polinetwork-cd:
+
+- `infrastructure/image-automation/image-providers.yaml`: one
+  `ResourceSetInputProvider` per image, which reads the `latest` tag and its digest.
+- `infrastructure/image-automation/receiver.yaml`: a Flux `Receiver` called by
+  the PoliNetworkOrg organization webhook on `package` events, at
+  `flux-webhook.polinetwork.org`. The webhook's HMAC signature is its only
+  authentication. If the webhook doesn't fire, the providers poll every 6 hours anyway.
+- `clusters/k3s/apps/<app>.yaml`: for apps with automatic updates this is a
+  `ResourceSet` instead of a plain Kustomization. It generates the app's
+  Kustomization with an `images` override that pins the digest.
+
+Apps that don't need automatic updates (databases, monitoring, ...) pin their
+image in the manifest, and you bump them with a PR.
+
+## Day-to-day [#day-to-day]
+
+### Web UI [#web-ui]
+
+[flux.polinetwork.org](https://flux.polinetwork.org) shows every Kustomization,
+HelmRelease and ResourceSet, with its status, last applied revision and errors.
+You log in through [auth.polinetwork.org](https://auth.polinetwork.org); only
+the Direttivo is admitted. From the UI you can **reconcile** (sync now),
+**suspend** and **resume** any resource.
+
+### From the node [#from-the-node]
+
+The `flux` CLI isn't installed on the node, but the Flux resources are regular
+Kubernetes objects:
+
+```sh
+# Status of all the Kustomizations (apps and infrastructure)
+kubectl get kustomizations -n flux-system
+
+# Latest image resolved for each app
+kubectl get resourcesetinputproviders -n flux-system
+
+# Why is an app not ready?
+kubectl describe kustomization <app> -n flux-system
+
+# Sync now instead of waiting: fetch the latest commit, then apply it
+kubectl annotate --overwrite gitrepository flux-system -n flux-system \
+  reconcile.fluxcd.io/requestedAt="$(date +%s)"
+kubectl annotate --overwrite kustomization <app> -n flux-system \
+  reconcile.fluxcd.io/requestedAt="$(date +%s)"
+```
+
+<Callout type="tip" title="Suspending an app">
+
+To stop Flux from touching an app while you debug it by hand, **suspend** its
+Kustomization from the Web UI. Remember to **resume** it afterwards: a suspended
+app also stops receiving image updates.
+
+</Callout>
+
+## References [#references]
+
+- [Flux Documentation](https://fluxcd.io/flux/)
+- [Flux Operator Documentation](https://fluxcd.control-plane.io/operator/)
+- [ResourceSets](https://fluxcd.control-plane.io/operator/resourcesets/introduction/)
+- [PoliNetwork-CD Repository](https://github.com/polinetworkorg/polinetwork-cd)
+
+
+# Cloud Infrastructure (/docs/infrastructure/getting-started/cloud-infrastructure)
+
+## Overview [#overview]
+
+This section explains how we organized our infrastructure.
+
+Everything regarding the deployment of apps and services is divided into two repositories:
+
+- [polinetworkorg/terraform](https://github.com/polinetworkorg/terraform) - Contains the Terraform code for the Azure resources: the `k3s01` VM, its disks and network, the Key Vaults, the managed identities, the backup storage account.
+- [polinetworkorg/polinetwork-cd](https://github.com/polinetworkorg/polinetwork-cd) - Our GitOps repo. It contains the Ansible playbooks that turn the VM into a K3s node, and the Kubernetes manifests of every app and service. Flux, running in the cluster, applies them.
+
+```mermaid
+flowchart TD
+  subgraph Github
+    tf(["`**terraform**`"])
+    cd(["`**polinetwork-cd**`"])
+    ghcr[(GHCR images)]
+  end
+  subgraph Cloudflare
+    edge[Tunnel + Access]
+  end
+  subgraph Azure
+    kv[(Key Vaults)]
+    blob[(Backup storage)]
+    subgraph vm[VM k3s01]
+      subgraph k3s[K3s cluster]
+        flux[Flux]
+        eso[External Secrets]
+        cfd[cloudflared]
+        traefik[Traefik]
+        app@{ shape: processes, label: "Apps / Services" }
+      end
+    end
+  end
+
+  tf -.-> vm
+  tf -.-> kv
+  cd -. Ansible .-> vm
+  cd <-.-> flux --> app
+  ghcr -. image digests .-> flux
+  kv --> eso --> app
+  edge <--> cfd --> traefik --> app
+  vm -. backups .-> blob
+```
+
+### **Terraform: Definition and Purpose** [#terraform-definition-and-purpose]  
+
+The **Terraform** repository is responsible for managing and provisioning cloud infrastructure. In simple terms, it defines and creates the resources needed for the infrastructure, such as:  
+
+- **Networks and subnets** (Virtual Network, NAT Gateway for outbound traffic, Network Security Group)
+- **Virtual machines** (the `k3s01` K3s node)
+- **Storage** (Managed Disks for the node, Blob Storage for backups and Terraform state)
+- **Security services** (Key Vaults, managed identities, workload identity federation)
+
+The code in **Terraform** describes these resources declaratively: it defines the desired state, and Terraform applies the necessary changes to reach that state. This repository is primarily used to **create and modify the cloud infrastructure** where applications will run.
+
+Terraform stops at the Azure boundary: it creates the VM, but it doesn't configure
+what runs inside it.
+
+### **PoliNetwork-CD: Definition and Purpose** [#polinetwork-cd-definition-and-purpose]  
+
+The **PoliNetwork-CD** (Continuous Deployment) repository picks up where Terraform stops. It has two parts:
+
+- **`ansible/`** configures the VM: it mounts the data disks, hardens SSH and the
+  firewall, installs a pinned K3s version, schedules the encrypted backups and
+  bootstraps Flux. You run it by hand, rarely.
+- **`clusters/k3s/`, `infrastructure/` and `apps/`** describe everything inside
+  Kubernetes. **Flux** watches the `main` branch and applies it continuously, so you
+  never run `kubectl apply` by hand.
+
+Through Flux, the repository is used to:
+
+- **Define application deployments** in Kubernetes (plain manifests organized with Kustomize, or Helm charts)
+- **Automatically update applications** when a new `latest` image is published
+- **Manage application configurations** (environment variables, secrets pulled from Key Vault)
+- **Monitor the state of applications** and ensure they remain in sync with the repository
+
+While Terraform is responsible for infrastructure, **PoliNetwork-CD** focuses on **managing the lifecycle of applications** running on that infrastructure, ensuring that code changes are applied automatically and securely.  
+
+### **Key Difference: Infrastructure vs. Deployment** [#key-difference-infrastructure-vs-deployment]
+
+| Repository | Main Purpose | Example of Managed Resources |
+|------------|--------------|------------------------------|
+| **Terraform** | Creates and manages cloud infrastructure | VM, disks, network, Key Vaults, identities |
+| **PoliNetwork-CD** (`ansible/`) | Configures the VM | Disk mounts, firewall, SSH, K3s, backups |
+| **PoliNetwork-CD** (Flux) | Automates application deployment and updates | Deployments, ingresses, secrets, storage |
+
+In summary, **Terraform builds the foundation on which applications run**, while **PoliNetwork-CD sets up the node and manages the deployment and continuous updating of applications**. Both repositories work together to ensure a scalable and efficient cloud infrastructure.
+
+### How a request reaches an app [#how-a-request-reaches-an-app]
+
+1. A visitor opens e.g. `https://api.polinetwork.org`. DNS points to Cloudflare.
+2. Cloudflare sends the request through the `k3s01` tunnel to one of the two
+   `cloudflared` pods in the cluster.
+3. `cloudflared` forwards it to **Traefik**, the K3s ingress controller.
+4. Traefik picks the app from the `Ingress` whose `host` matches, and forwards the
+   request to that app's `Service`.
+
+The VM never accepts inbound connections from the Internet: the tunnel is an
+outbound connection, and outbound traffic leaves Azure through a NAT Gateway.
+
+<Cards>
+  <Card
+    title="Terraform"
+    href="/docs/infrastructure/getting-started/cloud-infrastructure/terraform"
+    description="Detailed overview of our Azure-based infrastructure managed via the polinetworkorg/terraform repository."
+  />
+  <Card
+    title="K3s Node"
+    href="/docs/infrastructure/getting-started/cloud-infrastructure/k3s-node"
+    description="The k3s01 VM, how Ansible configures it, and how to run the playbooks."
+  />
+  <Card
+    title="Flux"
+    href="/docs/infrastructure/getting-started/cloud-infrastructure/flux"
+    description="How Flux deploys the polinetwork-cd repository to the K3s cluster."
+  />
+</Cards>
+
+## References [#references]
+
+### **Links to Repositories** [#links-to-repositories]
+
+- [Terraform Repository](https://github.com/polinetworkorg/terraform)
+- [PoliNetwork-CD Repository](https://github.com/polinetworkorg/polinetwork-cd)
+
+### **Additional Resources** [#additional-resources]
+
+- [Kubernetes Documentation](https://kubernetes.io/docs/)
+- [K3s Documentation](https://docs.k3s.io/)
+- [Flux Documentation](https://fluxcd.io/flux/)
+- [Terraform Documentation](https://www.terraform.io/docs/)
+
+
+# K3s Node (/docs/infrastructure/getting-started/cloud-infrastructure/k3s-node)
+
+## Overview [#overview]
+
+Production runs on a single VM, **`k3s01`**, created by Terraform
+(`environments/k3s`) and configured by the Ansible playbooks in
+[`polinetwork-cd/ansible`](https://github.com/polinetworkorg/polinetwork-cd/tree/main/ansible).
+
+| | |
+|---|---|
+| Size | `Standard_E2ps_v6` (ARM64), West Europe, zone 1 |
+| OS | Debian 13 ARM64 |
+| Private IP | `10.43.1.4` (no public IP) |
+| Kubernetes | K3s, single server node, pinned version (see `ansible/vars/main.yml`) |
+| Admin user | `pnadmin` |
+
+<Callout type="important" title="ARM64">
+
+The node is ARM64. Every image we deploy must have a `linux/arm64` variant,
+otherwise the pod fails with `exec format error`. Our GitHub workflows publish
+multi-arch images (`amd64` + `arm64`) for this reason.
+
+</Callout>
+
+## Disks [#disks]
+
+| Mount | Azure disk | Type | Used for |
+|-------|-----------|------|----------|
+| `/` | `disk-k3s01-os` | Standard SSD, 64 GB | Operating system |
+| `/srv/fast` | `disk-k3s-fast` (LUN 0) | Premium SSD v2, 64 GB | Volumes of the `fast` storage class (databases) |
+| `/srv/standard` | `disk-k3s-standard` (LUN 1) | Standard SSD, 128 GB | K3s data (`/srv/standard/k3s`), volumes of the `standard` storage class, local backup staging |
+
+Ansible finds the data disks by Azure LUN, refuses to touch a disk that is
+smaller than expected or holds an unexpected filesystem, formats them only when
+blank and mounts them by UUID. Both disks have `prevent_destroy` in Terraform.
+
+See [Add Storage](/docs/infrastructure/Guides/add-storage) for how volumes are carved out of these disks.
+
+## What Ansible sets up [#what-ansible-sets-up]
+
+The provisioning playbook (`ansible/playbooks/provision.yml`) applies these roles, in order:
+
+| Role | What it does |
+|------|--------------|
+| `base` | Base packages, UTC timezone, `pnadmin` user and the `k3s-admin` group, kernel modules and sysctls for Kubernetes |
+| `security` | SSH hardening (keys and Cloudflare Access certificates only), Debian security updates via `unattended-upgrades` (no automatic reboot), `nftables` host firewall |
+| `storage` | Formats and mounts the data disks, creates `/srv/*/volumes` |
+| `k3s` | Installs the pinned K3s binary (checked by SHA-256) and its configuration, waits for the node to be `Ready` |
+| `backup` | Installs the encrypted backup scripts and their systemd timers (see [Backups](/docs/infrastructure/Guides/backups)) |
+| `flux` | Installs the pinned Flux Operator and the `FluxInstance` that syncs `clusters/k3s` from the `main` branch |
+
+After that, Flux takes over everything inside the cluster (see [Flux](/docs/infrastructure/getting-started/cloud-infrastructure/flux)).
+
+### Notable K3s settings [#notable-k3s-settings]
+
+- **Pod and Service CIDRs** are `10.52.0.0/16` and `10.53.0.0/16`. The K3s
+  default `10.43.0.0/16` would collide with the Azure VNet.
+- **ServiceLB** and the bundled **local-storage** are disabled. Storage comes from
+  the local-path provisioner managed by Flux.
+- The bundled **Traefik** stays as the ingress controller, but Flux turns its
+  Service into `ClusterIP`: only `cloudflared` reaches it.
+- **Secrets encryption** at rest is enabled.
+- The API server signs service-account tokens for a public OIDC issuer
+  (`pnk3soidc` storage account). Azure trusts that issuer, which is how External
+  Secrets reads Key Vault without any stored credential.
+
+### Security guardrails [#security-guardrails]
+
+- The VM has no public IP and the NSG denies all inbound traffic. The host
+  firewall drops everything except SSH, the node itself and cluster traffic.
+- Pods cannot reach the Azure Instance Metadata Service (`169.254.169.254`), so
+  they can't borrow the VM's managed identities.
+- An admission policy rejects pods using `hostNetwork`, `hostPID` or `hostIPC`
+  outside `kube-system`, and another one forbids pods from running as the
+  `keyvault-reader` service account.
+
+## Running the playbooks [#running-the-playbooks]
+
+<Callout type="warning">
+
+You rarely need this: day-to-day changes go through Flux. Run Ansible when you
+change something under `ansible/` (e.g. a K3s upgrade or a new backup target).
+Only the IT Lead group has access to the node.
+
+</Callout>
+
+The playbooks run from your machine against `10.43.1.4` over SSH, so connect
+[WARP](/docs/infrastructure/getting-started/setup#cloudflare-warp--ssh) first.
+
+```sh
+cd ansible
+ansible-galaxy collection install -r requirements.yml
+./scripts/provision-and-verify.sh
+```
+
+The script is the only supported way to apply changes. It runs the playbook in
+check mode, then applies it twice and fails if the second run still changes
+something (the playbook must be idempotent). Finally it runs
+`playbooks/verify.yml`, which checks the disks, the K3s version, the firewall,
+the SSH configuration, that Flux is ready, that pods can't reach Azure IMDS, and
+it takes and validates a fresh backup. Logs are saved in `ansible/artifacts/`
+(ignored by Git).
+
+To run from inside the VM (for example through Azure Run Command), put a reviewed
+checkout on the VM and run:
+
+```sh
+./scripts/provision-and-verify.sh inventories/local/hosts.yml
+```
+
+<Callout type="danger">
+
+Never copy a private SSH key or a secret value into the repository or into Azure
+Run Command parameters.
+
+</Callout>
+
+### CI [#ci]
+
+The **Ansible** workflow in polinetwork-cd runs on every pull request that
+touches `ansible/`, `clusters/k3s/`, `infrastructure/`, `apps/` or `tests/`. It
+runs `ansible-lint`, `shellcheck`, a playbook syntax check, `kustomize build` on
+every Flux path and the manifest tests in `tests/`. It does **not** touch the VM.
+
+### Upgrading K3s [#upgrading-k3s]
+
+1. Pick a release from [K3s releases](https://github.com/k3s-io/k3s/releases) and
+   download its `k3s-arm64` binary checksum.
+2. Update `k3s_version`, `k3s_release_url` and `k3s_sha256` in `ansible/vars/main.yml`.
+3. Open a PR, merge it, then run `./scripts/provision-and-verify.sh`. K3s restarts
+   with the new binary; workloads come back on their own.
+
+The Flux Operator is upgraded the same way (`flux_operator_*` and
+`flux_distribution_version`).
+
+<Callout type="caution" title="Rebuilding the node">
+
+The workload identity trust relies on the cluster's service-account signing key,
+whose public part is committed in Terraform
+(`environments/k3s/k3s-service-account-jwks.json`). If the node is rebuilt from
+scratch without restoring the control-plane backup, the key changes and that file
+must be updated, otherwise External Secrets can't read Key Vault.
+
+</Callout>
+
+
+# Terraform (/docs/infrastructure/getting-started/cloud-infrastructure/terraform)
+
+## What is Terraform? [#what-is-terraform]
+
+Terraform is an open-source Infrastructure as Code (IaC) tool developed by
+HashiCorp. It allows you to define, provision, and manage the infrastructure
+using a declarative configuration language. This means you describe the desired
+state of the infrastructure, and Terraform takes care of creating and updating
+the resources to match that state.
+
+<Callout type="important">
+
+This documentation assumes you already have the Terraform CLI installed on your
+local machine. If you need help setting up Terraform, please refer to the
+[official documentation](https://learn.hashicorp.com/tutorials/terraform/install-cli).
+
+You'll also need to be logged in with the Azure CLI and have the necessary
+permissions to manage the resources in our Azure subscription (more on this
+[here](/docs/infrastructure/getting-started/setup#azure-cli)).
+
+Once you have logged in to the Azure CLI, select the subscription and export it
+for the provider:
+
+```sh
+az account set --subscription <subscription-id>
+export ARM_SUBSCRIPTION_ID=<subscription-id>
+export TF_VAR_subscription_id="$ARM_SUBSCRIPTION_ID"
+```
+
+More about this in the [repository README](https://github.com/PoliNetworkOrg/terraform/#local-checks).
+
+</Callout>
+
+### Why We Use Terraform [#why-we-use-terraform]
+
+Our organization leverages Terraform to manage our Azure cloud infrastructure for several important reasons:
+
+- **Consistency:** Defining our infrastructure as code ensures that every environment is configured the same way, reducing the chance of human error.
+- **Automation:** Terraform automates the provisioning and modification of resources, streamlining our deployment processes.
+- **Version Control:** Storing Terraform configurations in version control systems allows us to track changes, collaborate effectively, and revert to previous versions if needed.
+- **Modularity:** Terraform encourages breaking down the infrastructure into reusable modules, which simplifies management and enhances maintainability.
+
+### How Terraform Works [#how-terraform-works]
+
+<Callout type="warning">
+
+To run terraform commands you need to have the right permissions and credentials.
+If you are not sure about your permissions, please contact the IT department (but
+if you have to ask you probably shouldn't run `apply` yourself anyway).
+
+If you haven't yet set up the Azure CLI please refer to the [setup guide](/docs/infrastructure/getting-started/setup#azure-cli).
+
+</Callout>
+
+Terraform operates through a simple yet powerful workflow:
+
+1. **Write:** You define the infrastructure in configuration files (typically with a `.tf` extension).
+2. **Plan:** Running `terraform plan` generates an execution plan, showing you the changes Terraform will make to achieve the desired state.
+3. **Apply:** Executing `terraform apply` implements the changes, creating or updating the infrastructure accordingly.
+
+<Callout type="danger">
+
+Running Terraform commands can modify the cloud infrastructure.
+
+**THIS CAN INCUR COSTS OR CAUSE DOWNTIME AND PERMANENT DATA LOSS IF NOT DONE PROPERLY.**
+
+Always review the execution plan (`terraform plan`) before applying changes.
+
+</Callout>
+
+### Terraform Code vs. Terraform State vs. Azure State [#terraform-code-vs-terraform-state-vs-azure-state]
+
+- **Terraform Code:**  
+  This consists of the configuration files that describe your desired
+  infrastructure. These files are the blueprint for what you want the infrastructure to look like.
+
+- **Terraform State:**  
+  The state file (we have two of them, see [State Management](#state-management)) records the current state
+  of the infrastructure as managed by Terraform. This file is critical because
+  it maps your configuration to the real-world resources, tracks dependencies,
+  and allows Terraform to detect what needs to change during updates. Our state
+  file is stored remotely (in an Azure Storage Account) and is locked using
+  Azure's integrated leasing mechanism to prevent concurrent modifications.
+
+- **Azure State:**  
+  This is the actual state of resources deployed in the Azure environment.
+  While Terraform keeps track of these resources via its state file, the real
+  configuration and runtime details exist within Azure. The Terraform state acts
+  as an intermediary, ensuring that the desired state (from the Terraform code)
+  and the actual state (in Azure) are in sync. If resources are modified directly
+  in Azure without updating Terraform, discrepancies may occur, highlighting the
+  importance of using Terraform as the single source of truth.
+
+This clear separation between code, Terraform state, and the actual cloud state
+is key to maintaining a reliable and predictable infrastructure.
+
+## Terraform Implementation Overview [#terraform-implementation-overview]
+
+Welcome to the documentation for the **polinetworkorg/terraform** repository.
+This page provides an in-depth look at our Terraform implementation on
+**Microsoft Azure**, detailing the architecture of our infrastructure and the
+key modules that make it up. While this overview highlights our main components,
+it’s important to note that there are alternative approaches to similar problems,
+and our setup is tailored to our current needs.
+
+### Repository Overview [#repository-overview]
+
+The **polinetworkorg/terraform** repository is our centralized solution for
+provisioning and managing cloud infrastructure on Azure. Its default branch is
+**`stable`**.
+
+The code is split into two independent **root modules** (the folders you run
+`terraform` in). Each root owns its resources and has its own state file; a root
+can only read the other's resources through data sources, never declare them.
+
+- **`environments/k3s`:** the production K3s platform. It defines:
+  - the `k3s01` VM (Debian 13 ARM64) and its two data disks, `disk-k3s-fast`
+    (Premium SSD v2, 64 GB) and `disk-k3s-standard` (Standard SSD, 128 GB);
+  - the network: `vnet-k3s` (`10.43.0.0/16`), a NAT Gateway for outbound traffic,
+    and an NSG that denies all inbound traffic;
+  - the Key Vaults `kv-pn-apps` (application secrets) and `kv-pn-infra`
+    (platform secrets);
+  - the managed identities, including the one External Secrets uses through
+    workload identity federation, and the public OIDC issuer the cluster's
+    service-account tokens are verified against.
+- **`environments/legacy`:** everything from before the migration: the old AKS
+  cluster and its Kubernetes/Helm resources (ArgoCD, Longhorn, Kubernetes
+  Dashboard, MariaDB, ...), plus shared resources such as the resource group
+  `rg-polinetwork`, the backup storage account `polinetworkbackups` and the budgets.
+
+What runs *inside* the VM is not managed here: see [K3s Node](/docs/infrastructure/getting-started/cloud-infrastructure/k3s-node) and [Flux](/docs/infrastructure/getting-started/cloud-infrastructure/flux).
+
+<Callout type="info">
+
+While the choices made in this implementation reflect our specific requirements
+and constraints, it's worth noting that other approaches exist for managing
+cloud infrastructure with Terraform.
+
+Our modular design, state management strategy,
+and access controls are tailored to our current operational needs and funding
+situation—but they are not set in stone. Please feel free to reach out to the
+IT department if you have any questions or suggestions.
+
+</Callout>
+
+### Infrastructure Structure [#infrastructure-structure]
+
+Our repository is organized to clearly separate concerns and promote reusability.
+While the exact folder structure may vary, a typical layout looks like this:
+
+```bash
+📁 polinetworkorg/terraform/
+ ├─ 📁 environments/        # Root modules: run terraform here, with -chdir
+ │   ├─ 📁 k3s/             # K3s node, network, Key Vaults, identities (k3s.tfstate)
+ │   └─ 📁 legacy/          # Old AKS platform and shared resources (state.tfstate)
+ ├─ 📁 modules/             # Modules used by the legacy root
+ │   ├─ 📁 aks/             # Azure Kubernetes Service
+ │   ├─ 📁 argocd/          # ArgoCD installation
+ │   ├─ 📁 shared/          # Backup storage account, budgets
+ │   ├─ 📁 storage/         # Azure Storage Account where the Terraform state is kept
+ │   └─ [other modules]     # Additional modules for specific services
+ ├── README.md              # General repository documentation
+ ├── STATE_MIGRATION.md     # How the state was split between the two roots
+ └── [other files]
+```
+
+### State Management [#state-management]
+
+We use an **Azure Storage Account** for managing the Terraform state. The state
+files are stored within a dedicated container named `terraform-state`,
+as defined in our **storage** module:
+
+| Root | State file |
+|------|------------|
+| `environments/legacy` | `state.tfstate` |
+| `environments/k3s` | `k3s.tfstate` |
+
+ The integrated leasing mechanism provided
+by the Azure Storage Account is used for state locking, ensuring that concurrent
+Terraform operations do not conflict with each other.
+
+### Access and Authorization [#access-and-authorization]
+
+Given the critical nature of our infrastructure, modifications (e.g., running
+`terraform apply`) are restricted to personnel with sufficient clearance. As an
+association, any infrastructure changes require approval from either the Head of
+the IT Department or the Directive Council. All authorization is managed through
+**Microsoft's Entra ID system**, ensuring that only properly authenticated and
+authorized users can perform these operations.
+
+### Funding and Nonprofit Considerations [#funding-and-nonprofit-considerations]
+
+As a nonprofit organization, we benefit from a **Microsoft Azure Grant for Nonprofits**,
+which provides us with a budget of **€2000 per year**. This support helps offset
+our cloud costs and underpins our commitment to maintaining a robust and scalable
+infrastructure.
+
+<Callout type="info">
+
+This is one of the core reasons we are structured as a nonprofit organization, and why
+we use Azure as our cloud provider.
+
+You can find more about our benefits [here](https://www.microsoft.com/en-us/nonprofits/azure).
+
+If you have access to the adminorg account, you can check the current status of
+our Azure grant [here](https://www.microsoftazuresponsorships.com/).
+
+</Callout>
+
+## Making Changes to the Infrastructure [#making-changes-to-the-infrastructure]
+
+This section provides a basic guide on how to update our infrastructure using
+Terraform and introduces some of the automated workflows that help us maintain
+consistency and control.
+
+### Basic Workflow for Infrastructure Changes [#basic-workflow-for-infrastructure-changes]
+
+1. **Edit the Terraform Code:**  
+   Modify the relevant configuration files to define your desired changes in the
+   infrastructure. Most changes belong to `environments/k3s`.
+
+2. **Review Your Changes Locally:**  
+   Run `terraform -chdir=environments/<root> plan` to generate an execution plan.
+   This command will show you what changes will be made to align the actual
+   infrastructure with your code.
+
+3. **Open a Pull Request against `stable`:**  
+   The **Terraform workflow** runs format, init, validate and plan for both roots
+   and posts one comment per root with the plan. Pull requests never apply.
+
+4. **Cost Estimation with Infracost:**  
+   When you open a pull request, our **Infracost workflow** is triggered
+   automatically. This workflow calculates the estimated cost impact of your
+   changes and posts a report in the pull request comments, so you can review
+   any potential cost implications before merging.
+   <Callout type="tip">
+
+   If you want to run Infracost locally, you can install it by following the
+   [official documentation](https://www.infracost.io/docs/).
+
+   </Callout>
+
+5. **Apply the Changes:**  
+   After your changes have been reviewed and approved, merge the pull request.
+   The push to `stable` runs the plans again, then waits for a maintainer to
+   approve the GitHub **`production`** environment. Once approved, it applies
+   `k3s` first and `legacy` second. You don't run `terraform apply` yourself.
+
+6. **Drift Detection:**  
+   A nightly **Drift workflow** runs to detect any discrepancies between the
+   current Terraform state and the actual state in Azure. If this workflow
+   detects a drift from what the `terraform plan` output would predict, it
+   automatically opens an issue for further investigation.
+   At the moment it only checks the `legacy` root.
+
+### Basic Terraform CLI Commands [#basic-terraform-cli-commands]
+
+Always pick a root with `-chdir`, e.g. `terraform -chdir=environments/k3s plan`.
+Running Terraform at the repository root does nothing useful.
+
+- **`terraform init`**  
+  Initializes the working directory containing the Terraform configuration files.
+  <Callout type="tip">
+
+  This has to be run as soon as you clone the repository or when you pull changes
+  that include new modules or providers. Locally, add
+  `-backend-config=use_oidc=false` (OIDC is only for GitHub Actions).
+
+  </Callout>
+
+- **`terraform plan`**  
+  Generates an execution plan showing what changes will be applied to the infrastructure.
+
+- **`terraform apply`**  
+  Applies the changes defined in your Terraform configuration to the cloud environment.
+  In practice the Terraform workflow does this for you after the `production` approval.
+
+- **`terraform destroy`**  
+  Destroys the resources managed by Terraform, useful for tearing down test environments or decommissioning infrastructure.
+
+  <Callout type="danger">
+
+  If you ever happen to be as much as tempted of using `terraform destroy`, you
+  better be **SURE AS SHIT** about what you are doing. Never run it without
+  `-chdir`, and remember the K3s data disks have `prevent_destroy` for a reason. Make sure to review the
+  implications thoroughly before proceeding.
+  > *One does not simply destroy PoliNetwork with one command.*
+
+  </Callout>
+
+By following these steps and leveraging our automated workflows, you ensure that
+infrastructure changes are managed in a consistent, cost-aware, and controlled
+manner.
+
+## References [#references]
+
+- [Terraform Documentation](https://www.terraform.io/docs/index.html)
+- [Microsoft Azure Documentation](https://docs.microsoft.com/en-us/azure/)
+- [Infracost Documentation](https://www.infracost.io/docs/)
+- [Terraform Repository](https://github.com/polinetworkorg/terraform)
+
+
+# Monitoring (/docs/infrastructure/getting-started/k8s-basics/day-to-day/monitoring)
+
+## Monitoring [#monitoring]
+
+### Alerts [#alerts]
+
+You usually don't have to go looking for problems: Prometheus evaluates alert
+rules and Alertmanager sends them to our **Telegram** alert chat. Critical alerts
+repeat every hour, warnings every 12 hours. Among others, you get alerted when:
+
+- the node is short on CPU, memory, disk space or inodes;
+- a pod is crash-looping, OOM-killed or not running, or a deployment is missing replicas;
+- a Flux resource, an `ExternalSecret` or a secret store is not ready;
+- the Cloudflare tunnel has no connections (all public websites are down);
+- a backup hasn't succeeded on schedule.
+
+The rules live in `apps/monitoring/prometheus/alert-rules.yml` in polinetwork-cd.
+
+### Dashboards [#dashboards]
+
+- [Flux Web UI](https://flux.polinetwork.org): is every app in sync with Git? Why not?
+- [Grafana](https://monitoring.polinetwork.org): node and container metrics from Prometheus.
+- [Uptime Kuma](https://status.polinetwork.org): is each public website up?
+
+### From the command line [#from-the-command-line]
+
+[SSH into the node](/docs/infrastructure/getting-started/setup#cloudflare-warp--ssh), then run
+
+```
+kubectl get pods -A
+```
+
+This will give you a breakdown of all the pods running in the infrastructure.
+Besides one namespace per app (`web`, `backend`, `postgres`, ...), you'll see:
+
+| Namespace | What runs there |
+|-----------|-----------------|
+| `flux-system` | Flux controllers, the Flux Web UI |
+| `external-secrets` | External Secrets Operator |
+| `cloudflared` | The two Cloudflare Tunnel connectors |
+| `local-path-storage` | The volume provisioner |
+| `kube-system` | K3s components: CoreDNS, Traefik, metrics-server, node-exporter |
+
+Look at the `READY`, `STATUS` and `RESTARTS` columns: a pod that is not `Running`,
+or whose restart count keeps growing, needs a look. Some useful follow-ups:
+
+```sh
+# Events and the reason of the last restart
+kubectl describe pod -n <namespace> <pod-name>
+
+# Logs (add --previous to see the logs of the crashed container)
+kubectl logs -n <namespace> deploy/<deployment-name>
+
+# CPU and memory usage per pod
+kubectl top pods -A
+
+# Apps that Flux couldn't apply
+kubectl get kustomizations -n flux-system
+```
+
+Find an overview of Flux in [Flux](/docs/infrastructure/getting-started/cloud-infrastructure/flux).
+
+
+# SSH (/docs/infrastructure/getting-started/k8s-basics/day-to-day/ssh)
+
+## SSH [#ssh]
+Normally you shouldn't SSH into a pod to execute repetitive commands, instead you should configure them in the Dockerfile of your application.
+To connect into a pod's terminal, first [SSH into the node](/docs/infrastructure/getting-started/setup#cloudflare-warp--ssh), then use the `kubectl exec` command like so
+```
+kubectl exec -n :pod-namespace: -it deploy/:deployment-name: -- /bin/sh
+```
+this will open a shell inside a pod of that deployment (use `/bin/bash` if the image has it). <br/>
+Mind there is no `screen` installed by default but you can use `nohup`.
+
+<Callout type="caution">
+
+Anything you change inside a pod is lost when the pod restarts, and Flux reverts changes made with `kubectl edit`. Make persistent changes in the [polinetwork-cd](https://github.com/polinetworkorg/polinetwork-cd) repository.
+
+</Callout>
+
+
+# Intro (/docs/infrastructure/getting-started/k8s-basics/intro)
+
+## Intro [#intro]
+Keep in mind that the aim of this guide is not to provide a complete overview of all the commands in the k8s ecosystem but merely to give an easy to read handbook on very basic stuff 
+
+## Tools needed [#tools-needed]
+If you want to monitor or make changes to the pods:
+- Cloudflare WARP and an SSH client (`kubectl` runs on the node)
+
+If you want to manage secrets:
+- Azure CLI
+
+If you want to make changes to the infrastructure:
+- Terraform
+- [Pre-Commits](https://github.com/antonbabenko/pre-commit-terraform)
+- Ansible, only for changes to the node itself
+
+## Configure the tools [#configure-the-tools]
+- Connect WARP to PoliNetwork's Cloudflare Zero Trust organization
+- SSH into the node with ```ssh pnadmin@10.43.1.4```
+- Run kubectl as ```k3s kubectl``` (or add the alias ```alias kubectl='k3s kubectl'```)
+- Login in Azure CLI using az login
+
+The full procedure is in [Setup](/docs/infrastructure/getting-started/setup).
+
+
+# CD (/docs/infrastructure/getting-started/pipelines/cd)
+
+## Continuous Delivery [#continuous-delivery]
+Each app repository builds its Docker image and publishes it to [GHCR](https://github.com/orgs/PoliNetworkOrg/packages) with the `latest` tag (see [CI](/docs/infrastructure/getting-started/pipelines/ci)).
+That's where the app pipeline stops: it doesn't touch the [polinetwork-cd](https://github.com/polinetworkorg/polinetwork-cd) repository.
+
+## Continuous Deployment [#continuous-deployment]
+We rely on [Flux](/docs/infrastructure/getting-started/cloud-infrastructure/flux) to deploy our pods following the manifests in the `main` branch of polinetwork-cd.
+Flux continuously compares the cluster with the repository and applies any difference, so a merged PR in polinetwork-cd reaches production within minutes.
+
+New images don't need a commit: when a new `latest` image is published, GitHub calls a Flux webhook, Flux resolves `latest` to the new image digest and rolls out the deployment.
+If the webhook is missed, Flux checks for new images every 6 hours anyway.
+
+Our deployments use rolling updates with `maxUnavailable: 0`: Kubernetes starts the new pod, waits for its readiness probe, and only then stops the old one, so a broken image doesn't take the app down.
+Stateful services (databases, Redis, Grafana) use the `Recreate` strategy instead, because only one pod at a time can write to their volume.
+
+
+# CI (/docs/infrastructure/getting-started/pipelines/ci)
+
+## Continuous Integration [#continuous-integration]
+
+The first step of our CI processes is the GitHub Actions workflow in each repository. For example, the [web](https://github.com/PoliNetworkOrg/web/tree/main/.github/workflows) repository has:
+
+- `test.yml`, which typechecks and lints pushes to `main` and pull requests;
+- `docker.yml`, which on every push to `main` builds the Docker image for `amd64` and `arm64` and publishes it to GHCR as `ghcr.io/polinetworkorg/web:latest`.
+
+Our K3s node is ARM64, so the `arm64` build is required. Keep publishing a
+multi-arch `latest` manifest when you set up a new repository.
+
+The [polinetwork-cd](https://github.com/polinetworkorg/polinetwork-cd) repository has its own CI too: the **Ansible** workflow lints the playbooks and builds every Flux path with `kustomize` on each pull request. See [K3s Node](/docs/infrastructure/getting-started/cloud-infrastructure/k3s-node#ci).
+
+
+# Setup (/docs/infrastructure/getting-started/setup)
+
+If it's your first time accessing the infrastructure, you'll need to set up the tools and configure them.
+
+<Callout type="caution">
+
+This tutorial assumes your account has the right permissions to access the infrastructure. If not, please contact the team.
+SSH access to the node is restricted to the **IT Lead** group.
+
+</Callout>
+
+## How access works [#how-access-works]
+
+The K3s node `k3s01` has **no public IP**. Its private address is `10.43.1.4`,
+inside the Azure VNet `vnet-k3s`, and the Azure firewall (NSG) denies all inbound
+traffic. Nothing reaches the VM directly from the Internet:
+
+- websites reach the cluster through a **Cloudflare Tunnel** (an outbound connection
+  opened by `cloudflared` pods running in the cluster);
+- people reach the VM through **Cloudflare WARP**, which routes `10.43.1.4` through
+  the same tunnel, and **Cloudflare Access for Infrastructure**, which signs a
+  short-lived SSH certificate after you log in with your PoliNetwork account.
+
+There is no kubeconfig to download: you SSH into the node and run `kubectl` there.
+
+## Cloudflare WARP & SSH [#cloudflare-warp--ssh]
+
+- Install the [Cloudflare WARP client](https://developers.cloudflare.com/cloudflare-one/connections/connect-devices/warp/download-warp/).
+
+- Enroll it in PoliNetwork's Cloudflare Zero Trust organization
+  (*Preferences → Account → Login to Cloudflare Zero Trust*) and log in with your
+  PoliNetwork account. Ask the team for the organization (team) name.
+
+- With WARP connected, SSH into the node:
+
+  ```sh
+  ssh pnadmin@10.43.1.4
+  ```
+
+  The first time, your browser asks you to authenticate. You don't need an SSH key:
+  Cloudflare issues a short-lived certificate for the `pnadmin` user, and the node
+  only accepts keys and Cloudflare Access certificates (no passwords, no root login).
+
+- To check if everything is working, run `k3s kubectl get pods -n <namespace>`. You should see a list of pods.
+
+<Callout type="tip">
+
+`pnadmin` is in the `k3s-admin` group, which can read the K3s kubeconfig, so
+`k3s kubectl` works without `sudo`. Add an alias to save some typing:
+
+```sh
+echo "alias kubectl='k3s kubectl'" >> ~/.bashrc
+```
+
+The rest of the docs write `kubectl` and assume this alias.
+
+</Callout>
+
+<Callout type="info">
+
+The possible values of ```<namespace>``` match the folders in
+[`apps/`](https://github.com/polinetworkorg/polinetwork-cd/tree/main/apps) in the
+polinetwork-cd repository (e.g. `web`, `backend`, `postgres`). Run
+`kubectl get namespaces` to see them all.
+
+</Callout>
+
+<Callout type="danger" title="Break-glass access">
+
+If Cloudflare is down or the tunnel is broken, you can still reach the VM through
+**Azure Run Command** or the **Serial Console** in the Azure portal (VM `k3s01`,
+resource group `rg-polinetwork`). Use them only for emergencies.
+
+</Callout>
+
+## Azure CLI [#azure-cli]
+
+You still need the Azure CLI to manage secrets in Key Vault and to inspect Azure
+resources.
+
+- Download and install the [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest).
+
+- Run ```az login``` to login.
+
+You don't need `az aks get-credentials` or `kubelogin` anymore: those were only
+needed for the old AKS cluster.
+
+## Web dashboards [#web-dashboards]
+
+| URL | What | Who can log in |
+|-----|------|----------------|
+| [flux.polinetwork.org](https://flux.polinetwork.org) | Flux Web UI: sync status of every app, reconcile/suspend/resume | Direttivo, via auth.polinetwork.org |
+| [monitoring.polinetwork.org](https://monitoring.polinetwork.org) | Grafana dashboards (Prometheus metrics) | Grafana accounts |
+| [status.polinetwork.org](https://status.polinetwork.org) | Uptime Kuma status page | Public |
+
+## Port Forwarding [#port-forwarding]
+
+To access services running on the cluster (such as the PostgreSQL database), you
+need two hops: `kubectl port-forward` on the node, and an SSH tunnel from your
+machine to the node. You can do both with one command:
+
+```sh
+ssh -L <local-port>:localhost:<remote-port> pnadmin@10.43.1.4 \
+  k3s kubectl port-forward -n <namespace> svc/<service-name> <remote-port>:<service-port>
+```
+
+For example, to reach PostgreSQL on `localhost:5432`:
+
+```sh
+ssh -L 5432:localhost:5432 pnadmin@10.43.1.4 \
+  k3s kubectl port-forward -n postgres svc/postgres-service 5432:5432
+```
+
+Keep the command running while you use the connection, and stop it with `Ctrl+C`.
+
+<Callout type="tip">
+
+Run `kubectl get svc -n <namespace>` on the node to find service names and ports.
+You can use the same template to connect to other services.
+
+</Callout>
+
+
+# PoliNetwork's Technical Documentation (/docs/intro)
+
+## Introduction [#introduction]
+
+Welcome to PoliNetwork's technical documentation! This documentation is intended
+to provide a somewhat comprehensive guide to many of PoliNetwork's projects.
+
+## Infrastructure [#infrastructure]
+
+We run our infrastructure on Azure (paid with the
+[Microsoft Azure Sponsorship](https://www.microsoftazuresponsorships.com/))
+
+If you want to learn how it works and how to add new services, check out the
+[Infrastructure](/docs/infrastructure/Introduction) section.
+
+## Archived Projects 🗃️ [#archived-projects-️]
+
+In this section, you will find documentations for archived projects and repositories.
+These projects are no longer actively maintained or have been deprecated. However,
+the documentation is preserved for reference purposes and can be valuable for
+understanding past developments and decisions. [Have at it!](/docs/archive)

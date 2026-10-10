@@ -1,0 +1,24 @@
+# Intro (/docs/infrastructure/getting-started/k8s-basics/intro)
+
+## Intro [#intro]
+Keep in mind that the aim of this guide is not to provide a complete overview of all the commands in the k8s ecosystem but merely to give an easy to read handbook on very basic stuff 
+
+## Tools needed [#tools-needed]
+If you want to monitor or make changes to the pods:
+- Cloudflare WARP and an SSH client (`kubectl` runs on the node)
+
+If you want to manage secrets:
+- Azure CLI
+
+If you want to make changes to the infrastructure:
+- Terraform
+- [Pre-Commits](https://github.com/antonbabenko/pre-commit-terraform)
+- Ansible, only for changes to the node itself
+
+## Configure the tools [#configure-the-tools]
+- Connect WARP to PoliNetwork's Cloudflare Zero Trust organization
+- SSH into the node with ```ssh pnadmin@10.43.1.4```
+- Run kubectl as ```k3s kubectl``` (or add the alias ```alias kubectl='k3s kubectl'```)
+- Login in Azure CLI using az login
+
+The full procedure is in [Setup](/docs/infrastructure/getting-started/setup).
