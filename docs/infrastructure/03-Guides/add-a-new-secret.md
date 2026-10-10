@@ -150,7 +150,14 @@ Append an entry under `data`:
           # add-highlight-end
 ```
 
-### As a file
+### As a file (deprecated)
+
+:::warning Deprecated
+Use [environment variables](#as-an-environment-variable) instead. Mounting the
+Secret as a volume was required by the old CSI driver; with ESO it's only extra
+YAML, and no app does it anymore. Keep it for an app that can only read its
+configuration from files.
+:::
 
 ```yaml title="apps/<namespace>/deployment.yaml"
     spec:
@@ -170,9 +177,6 @@ Append an entry under `data`:
             secretName: azure-kv
       # add-highlight-end
 ```
-
-Unlike the old CSI driver, you don't need to mount a volume to use a secret as
-an environment variable: pick whichever form the app needs.
 
 ## Deploy and check
 
@@ -202,8 +206,8 @@ Environment variables are read only when a container starts, so restart the app:
 kubectl rollout restart deployment/<deployment-name> -n <namespace>
 ```
 
-Secrets mounted as files are updated in place after a short delay, but your app
-has to re-read them.
+(Secrets mounted as files are updated in place after a short delay, but the app
+has to re-read them.)
 
 ## Key Vault management
 
