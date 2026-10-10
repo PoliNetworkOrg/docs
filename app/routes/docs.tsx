@@ -1,5 +1,6 @@
 import type { Route } from './+types/docs'
 import { DocsLayout } from 'fumadocs-ui/layouts/spacious'
+import { SearchTrigger } from 'fumadocs-ui/layouts/shared/slots/search-trigger'
 import {
   DocsBody,
   DocsDescription,
@@ -12,6 +13,7 @@ import { docs, source } from '@/lib/source'
 import { baseOptions } from '@/lib/layout.shared'
 import { useFumadocsLoader } from 'fumadocs-core/source/client'
 import { useMDXComponents } from '@/components/mdx'
+import { HeaderActions } from '@/components/layout/header-actions'
 import { use } from 'react'
 import { appName, getPageMarkdownUrl, gitConfig } from '@/lib/shared'
 import { withBase } from '@/lib/base-url'
@@ -59,9 +61,18 @@ function Content({ path, markdownUrl }: { path: string; markdownUrl: string }) {
 export default function Page({ loaderData }: Route.ComponentProps) {
   const { pageTree, path, markdownUrl } = useFumadocsLoader(loaderData)
 
-  // the sidebar's section switcher replaces the navbar links
+  // The sidebar's section switcher replaces the navbar links, and search moves
+  // from the sidebar to the page header (the mobile header keeps its own).
   return (
-    <DocsLayout {...baseOptions()} links={[]} tree={pageTree}>
+    <DocsLayout
+      {...baseOptions()}
+      links={[]}
+      tree={pageTree}
+      slots={{
+        actions: HeaderActions,
+        searchTrigger: { sm: SearchTrigger, full: () => null },
+      }}
+    >
       <Content path={path} markdownUrl={markdownUrl} />
     </DocsLayout>
   )
