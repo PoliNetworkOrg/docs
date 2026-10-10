@@ -6,11 +6,11 @@ import prettier from 'eslint-config-prettier'
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
-  { files: ['src/**/*.{ts,tsx}'] },
-  { languageOptions: { globals: globals.browser } },
+  { files: ['**/*.{js,mjs,ts,tsx}'] },
+  { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
   pluginReact.configs.flat['jsx-runtime'],
   prettier,
-  { ignores: ['**/.docusaurus/**'] },
+  { ignores: ['build/', '.react-router/', '.source/'] },
 ]

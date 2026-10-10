@@ -1,0 +1,33 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+/* PoliNetwork blue */
+@theme {
+  --color-fd-primary: #1055ad;
+  --color-fd-primary-foreground: #ffffff;
+}
+
+.dark {
+  --color-fd-primary: #5788c5;
+  --color-fd-primary-foreground: #ffffff;
+}
+
+/* `[!code error]` lines */
+.shiki .highlighted.error {
+  --fd-counter-color: var(--color-red-500);
+  background-color: color-mix(in oklab, var(--color-red-500) 12%, transparent);
+}
+
+.shiki .highlighted.error::after {
+  border-color: color-mix(in oklab, var(--color-red-500) 60%, transparent);
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}
