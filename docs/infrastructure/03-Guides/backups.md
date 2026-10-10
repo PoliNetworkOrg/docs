@@ -114,8 +114,9 @@ Copy the encrypted archive to your machine and decrypt it there with
 ```sh
 scp pnadmin@10.43.1.4:<archive>.tar.gz.age .
 
-az keyvault secret show --vault-name kv-pn-infra --name backup-age-identity \
-  --query value -o tsv > age-identity.txt
+# umask 077: the identity file is readable only by you
+(umask 077; az keyvault secret show --vault-name kv-pn-infra --name backup-age-identity \
+  --query value -o tsv > age-identity.txt)
 
 mkdir restore
 age --decrypt --identity age-identity.txt <archive>.tar.gz.age | tar -xz -C restore

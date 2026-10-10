@@ -22,8 +22,9 @@ There are two storage classes, one per data disk:
   grow until the whole disk is full, and then every app on that disk breaks.
   Check the free space first, and keep an eye on the `PersistentVolumeHigh` and
   `NodeDiskHigh` alerts.
-- **Volumes are `ReadWriteOnce`** and live on one node: only one pod at a time should
-  write to them.
+- **`ReadWriteOnce` doesn't mean one pod.** It limits a volume to one node, and we only
+  have one node: two pods can mount the same volume and write to it at the same time.
+  Make sure only one pod at a time uses it (see `Recreate` below).
 - **Volumes are retained.** Deleting a PVC doesn't delete its directory (`reclaimPolicy: Retain`).
 :::
 

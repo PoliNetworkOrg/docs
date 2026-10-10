@@ -73,7 +73,7 @@ resource group `rg-polinetwork`). Use them only for emergencies.
 You still need the Azure CLI to manage secrets in Key Vault and to inspect Azure
 resources.
 
-- Download and install the Azure CLI [here](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest).
+- Download and install the [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest).
 
 - Run ```az login``` to login.
 

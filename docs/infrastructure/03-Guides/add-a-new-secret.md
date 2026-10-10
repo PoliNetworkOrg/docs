@@ -63,7 +63,7 @@ spec:
   target:
     name: azure-kv               # name of the Kubernetes Secret ESO creates
     creationPolicy: Owner
-    deletionPolicy: Retain       # keep the Secret if Key Vault is unreachable
+    deletionPolicy: Retain       # keep the Secret if the Key Vault secret is deleted
   data:
     - secretKey: <k8s-key>       # key inside the Kubernetes Secret
       remoteRef:
