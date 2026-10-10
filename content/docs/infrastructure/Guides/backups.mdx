@@ -20,7 +20,7 @@ Each run:
    storage account, using the `id-k3s-backup` managed identity;
 4. publishes its success time to Prometheus.
 
-<Callout type="info" title="Encryption">
+<Callout type="important" title="Encryption">
 
 The node only has the age **public** key. The private key (the "identity") is the
 secret `backup-age-identity` in the `kv-pn-infra` Key Vault, and it must never be
@@ -73,7 +73,7 @@ Then run the playbook (see [K3s Node](/docs/infrastructure/getting-started/cloud
 
 ## Restoring
 
-<Callout type="error">
+<Callout type="danger">
 
 Restoring overwrites live data. Agree on it with the Direttivo first, and take a
 fresh backup right before (`sudo systemctl start k3s-application-backup.service`)
@@ -132,7 +132,7 @@ rm age-identity.txt
 `restore/` now contains `postgres-dumpall.sql`, `redis.rdb`, `bot-ts-redis.rdb`,
 `influxdb-backup.tar`, `uptime-kuma.db`, `grafana.db` and the `*-files.tar` archives.
 
-<Callout type="warning">
+<Callout type="caution">
 
 These files hold personal data and credentials in clear text. Delete them as soon as
 you're done.

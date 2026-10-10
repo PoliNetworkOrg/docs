@@ -17,7 +17,7 @@ Production runs on a single VM, **`k3s01`**, created by Terraform
 | Kubernetes | K3s, single server node, pinned version (see `ansible/vars/main.yml`) |
 | Admin user | `pnadmin` |
 
-<Callout type="info" title="ARM64">
+<Callout type="important" title="ARM64">
 
 The node is ARM64. Every image we deploy must have a `linux/arm64` variant,
 otherwise the pod fails with `exec format error`. Our GitHub workflows publish
@@ -111,7 +111,7 @@ checkout on the VM and run:
 ./scripts/provision-and-verify.sh inventories/local/hosts.yml
 ```
 
-<Callout type="error">
+<Callout type="danger">
 
 Never copy a private SSH key or a secret value into the repository or into Azure
 Run Command parameters.
@@ -136,7 +136,7 @@ every Flux path and the manifest tests in `tests/`. It does **not** touch the VM
 The Flux Operator is upgraded the same way (`flux_operator_*` and
 `flux_distribution_version`).
 
-<Callout type="warning" title="Rebuilding the node">
+<Callout type="caution" title="Rebuilding the node">
 
 The workload identity trust relies on the cluster's service-account signing key,
 whose public part is committed in Terraform

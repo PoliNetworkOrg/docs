@@ -14,7 +14,7 @@ You don't deploy from your machine: you open a PR, and once it's merged into `ma
 Flux applies it.  
 Check [minikube](https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download) or [K3s](https://docs.k3s.io/quick-start) to run a k8s cluster on your machine for testing purposes.
 
-<Callout type="info" title="CD">
+<Callout type="note" title="CD">
 
 To deploy our applications, we use [Flux](https://fluxcd.io/flux/) syncing the
 `clusters/k3s` folder of the `main` branch of
@@ -33,7 +33,7 @@ For more info, check out [Flux](/docs/infrastructure/getting-started/cloud-infra
 5. Open a PR into polinetwork-cd, wait for CI, merge
 6. Monitor the deploy on the [Flux Web UI](https://flux.polinetwork.org)
 
-<Callout type="info" title="ARM64 images">
+<Callout type="important" title="ARM64 images">
 
 The node is ARM64. An image built only for `amd64` can't run there, and the pod fails
 with `exec format error`. Build a multi-arch image (see the
@@ -329,7 +329,7 @@ spec:
             digest: << inputs.<app>_image.digest | quote >>
 ```
 
-<Callout type="warning" title="Input names">
+<Callout type="caution" title="Input names">
 
 The inputs are named after the provider, with hyphens turned into underscores:
 the provider `bot-ts-image` becomes `inputs.bot_ts_image`.

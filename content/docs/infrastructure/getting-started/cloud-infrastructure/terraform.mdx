@@ -11,7 +11,7 @@ using a declarative configuration language. This means you describe the desired
 state of the infrastructure, and Terraform takes care of creating and updating
 the resources to match that state.
 
-<Callout type="info">
+<Callout type="important">
 
 This documentation assumes you already have the Terraform CLI installed on your
 local machine. If you need help setting up Terraform, please refer to the
@@ -61,7 +61,7 @@ Terraform operates through a simple yet powerful workflow:
 2. **Plan:** Running `terraform plan` generates an execution plan, showing you the changes Terraform will make to achieve the desired state.
 3. **Apply:** Executing `terraform apply` implements the changes, creating or updating the infrastructure accordingly.
 
-<Callout type="error">
+<Callout type="danger">
 
 Running Terraform commands can modify the cloud infrastructure.
 
@@ -236,7 +236,7 @@ consistency and control.
    automatically. This workflow calculates the estimated cost impact of your
    changes and posts a report in the pull request comments, so you can review
    any potential cost implications before merging.
-   <Callout type="idea">
+   <Callout type="tip">
 
    If you want to run Infracost locally, you can install it by following the
    [official documentation](https://www.infracost.io/docs/).
@@ -263,7 +263,7 @@ Running Terraform at the repository root does nothing useful.
 
 - **`terraform init`**  
   Initializes the working directory containing the Terraform configuration files.
-  <Callout type="idea">
+  <Callout type="tip">
 
   This has to be run as soon as you clone the repository or when you pull changes
   that include new modules or providers. Locally, add
@@ -281,7 +281,7 @@ Running Terraform at the repository root does nothing useful.
 - **`terraform destroy`**  
   Destroys the resources managed by Terraform, useful for tearing down test environments or decommissioning infrastructure.
 
-  <Callout type="error">
+  <Callout type="danger">
 
   If you ever happen to be as much as tempted of using `terraform destroy`, you
   better be **SURE AS SHIT** about what you are doing. Never run it without

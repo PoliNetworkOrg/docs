@@ -39,7 +39,7 @@ Until October 2026 we ran on AKS (Azure Kubernetes Service). K3s gives us the
 same Kubernetes API on one VM that we fully control and size ourselves, and it
 drops our dependency on AKS-specific add-ons (Azure CSI drivers, Longhorn, ArgoCD).
 
-<Callout type="info" title="Legacy AKS">
+<Callout type="note" title="Legacy AKS">
 
 The AKS cluster `aks-polinetwork` is still defined in the `environments/legacy`
 Terraform root, but no production workload runs on it anymore.
@@ -50,7 +50,7 @@ If you find instructions mentioning `az aks get-credentials`, ArgoCD,
 
 ## About this documentation
 
-<Callout type="info">
+<Callout type="important">
 
 Most of the docs explain procedures with `kubectl`, which you run on the K3s node
 over SSH, and with the Azure CLI, which you use for Key Vault secrets.

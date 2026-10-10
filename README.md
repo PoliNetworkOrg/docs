@@ -50,7 +50,7 @@ Pages live in `content/docs/` as `.mdx` files: the URL follows the file path
   rendered as the page heading, so don't repeat it as a `#` heading.
 - The sidebar order and folder names come from the `meta.json` file in each folder.
 - Link to other pages with their URL, e.g. `[Backups](/docs/infrastructure/Guides/backups)`.
-- Callouts: `<Callout type="info|idea|warning|error" title="Optional title">...</Callout>`.
+- Callouts: `<Callout type="note|tip|info|important|warning|caution|danger" title="Optional title">...</Callout>`.
 - Code blocks take a `title="file.yaml"` and `lineNumbers`. Mark lines with a comment at the
   end of the line, or alone on the line before them with a line count:
   `# [!code ++]` (added), `# [!code --]` (removed), `# [!code highlight]`, `# [!code error]`,

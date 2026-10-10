@@ -16,7 +16,7 @@ Ours is installed by Ansible through the
 [polinetwork-cd](https://github.com/polinetworkorg/polinetwork-cd), starting
 from the `clusters/k3s` folder.
 
-<Callout type="info">
+<Callout type="important">
 
 Merging to `main` in polinetwork-cd **is** deploying to production.
 Never `kubectl apply` or `kubectl edit` a resource that Flux manages: Flux reverts
@@ -136,7 +136,7 @@ kubectl annotate --overwrite kustomization <app> -n flux-system \
   reconcile.fluxcd.io/requestedAt="$(date +%s)"
 ```
 
-<Callout type="idea" title="Suspending an app">
+<Callout type="tip" title="Suspending an app">
 
 To stop Flux from touching an app while you debug it by hand, **suspend** its
 Kustomization from the Web UI. Remember to **resume** it afterwards: a suspended

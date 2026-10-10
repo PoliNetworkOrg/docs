@@ -17,7 +17,7 @@ There are two storage classes, one per data disk:
 | `fast` | Premium SSD v2, 64 GB | `/srv/fast/volumes/<namespace>/<pvc>/` | Latency-sensitive databases (today: PostgreSQL and the Redis instances) |
 | `standard` (default) | Standard SSD, 128 GB | `/srv/standard/volumes/<namespace>/<pvc>/` | Everything else (today: InfluxDB, Prometheus, Grafana, Uptime Kuma) |
 
-<Callout type="info">
+<Callout type="important">
 
 - **The size is not enforced.** `storage: 4Gi` in a PVC is a label, not a quota: a volume can
   grow until the whole disk is full, and then every app on that disk breaks.
@@ -106,7 +106,7 @@ Parameters:
 The volume is created when the first pod using it is scheduled, so the PVC stays
 `Pending` until then: that's expected.
 
-<Callout type="idea" title="File permissions">
+<Callout type="tip" title="File permissions">
 
 local-path directories are owned by `root`. If your container runs as a non-root
 user, set `securityContext.fsGroup` on the pod to the user's group (see `apps/redis`
@@ -129,7 +129,7 @@ Since a volume is just a directory, you can look at it from the node:
 sudo ls -la /srv/<fast|standard>/volumes/<namespace>/<name>-pvc/
 ```
 
-<Callout type="error">
+<Callout type="danger">
 
 Don't edit files of a running database from the node. Stop the app first, or go
 through the app itself.
