@@ -1,16 +1,21 @@
 import type { ReactNode } from 'react'
-import { CircleAlert, Flame, Info, Lightbulb, NotebookPen, TriangleAlert } from 'lucide-react'
+import { CalloutContainer, CalloutDescription, CalloutTitle } from 'fumadocs-ui/components/callout'
+import { CircleAlert, Info, Lightbulb } from 'lucide-react'
 
-// Docusaurus-style admonitions; the Fumadocs type names are accepted as aliases.
+// Same filled style as the Fumadocs icons
+const iconClass = 'size-5 -me-0.5 fill-(--callout-color) text-fd-card'
+
+// Docusaurus admonition types on top of the Fumadocs callout. `color` is the
+// Fumadocs color the callout is tinted with; `icon` replaces its default one.
 const types = {
-  note: { label: 'Note', icon: NotebookPen },
-  tip: { label: 'Tip', icon: Lightbulb },
-  info: { label: 'Info', icon: Info },
-  important: { label: 'Important', icon: CircleAlert },
-  warning: { label: 'Warning', icon: TriangleAlert },
-  caution: { label: 'Caution', icon: TriangleAlert },
-  danger: { label: 'Danger', icon: Flame },
-}
+  note: { fumadocs: 'info', color: 'var(--color-fd-muted-foreground)', icon: <Info className={iconClass} /> },
+  tip: { fumadocs: 'success', color: 'var(--color-fd-success)', icon: <Lightbulb className={iconClass} /> },
+  info: { fumadocs: 'info', color: 'var(--color-fd-info)' },
+  important: { fumadocs: 'info', color: 'var(--color-fd-primary)', icon: <CircleAlert className={iconClass} /> },
+  warning: { fumadocs: 'warning', color: 'var(--color-fd-warning)' },
+  caution: { fumadocs: 'warning', color: 'var(--color-fd-warning)' },
+  danger: { fumadocs: 'error', color: 'var(--color-fd-error)' },
+} as const
 
 const aliases = {
   idea: 'tip',
@@ -31,15 +36,17 @@ export function Callout({
   children?: ReactNode
 }) {
   const resolved = type in aliases ? aliases[type as keyof typeof aliases] : (type as keyof typeof types)
-  const { label, icon: Icon } = types[resolved]
+  const config: { fumadocs: string; color: string; icon?: ReactNode } = types[resolved]
 
   return (
-    <div className="callout my-6 rounded-lg px-5 py-4" data-type={resolved}>
-      <p className="callout-title not-prose flex items-center gap-2 text-sm font-bold tracking-wide uppercase">
-        <Icon className="size-4.5" aria-hidden />
-        {title ?? label}
-      </p>
-      <div className="mt-2 [&>:first-child]:mt-0 [&>:last-child]:mb-0">{children}</div>
-    </div>
+    <CalloutContainer
+      type={config.fumadocs as 'info'}
+      icon={config.icon}
+      className="callout"
+      style={{ '--callout-color': config.color } as React.CSSProperties}
+    >
+      {title && <CalloutTitle>{title}</CalloutTitle>}
+      <CalloutDescription>{children}</CalloutDescription>
+    </CalloutContainer>
   )
 }

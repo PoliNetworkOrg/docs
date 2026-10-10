@@ -74,47 +74,29 @@ html > body[data-scroll-locked] {
   --removed-body-scroll-bar-size: 0px !important;
 }
 
-/* Callouts: a tinted background and a thick left border in the type's hue */
+/* Fumadocs callouts, tinted with their --callout-color */
 .callout {
-  --callout-c: 1;
-  background-color: oklch(0.955 calc(0.04 * var(--callout-c)) var(--callout-h));
-  border-left: 5px solid oklch(0.6 calc(0.16 * var(--callout-c)) var(--callout-h));
-  color: var(--color-fd-foreground);
+  background-color: color-mix(in oklab, var(--callout-color) 8%, var(--color-fd-card));
+  border-color: color-mix(in oklab, var(--callout-color) 35%, transparent);
 }
 
 .dark .callout {
-  background-color: oklch(0.29 calc(0.075 * var(--callout-c)) var(--callout-h));
-  border-left-color: oklch(0.62 calc(0.17 * var(--callout-c)) var(--callout-h));
+  background-color: color-mix(in oklab, var(--callout-color) 12%, var(--color-fd-card));
 }
 
-.callout[data-type='note'] {
-  --callout-h: 257;
-  --callout-c: 0.35;
-}
-.callout[data-type='tip'] {
-  --callout-h: 145;
-}
-.callout[data-type='info'],
-.callout[data-type='important'] {
-  --callout-h: 235;
-}
-.callout[data-type='warning'],
-.callout[data-type='caution'] {
-  --callout-h: 80;
-}
-.callout[data-type='danger'] {
-  --callout-h: 25;
+.callout > [role='none'] {
+  background-color: var(--callout-color);
 }
 
-.callout-title {
-  color: oklch(0.42 calc(0.14 * var(--callout-c)) var(--callout-h));
-}
-.dark .callout-title {
-  color: oklch(0.92 calc(0.05 * var(--callout-c)) var(--callout-h));
+.callout > div > p:first-child {
+  color: color-mix(in oklab, var(--callout-color) 70%, var(--color-fd-foreground));
 }
 
-/* inline code takes the callout's hue */
+.callout > div > div {
+  color: color-mix(in oklab, var(--color-fd-foreground) 85%, transparent);
+}
+
 .callout :not(pre) > code {
-  background-color: oklch(0.6 calc(0.16 * var(--callout-c)) var(--callout-h) / 14%);
-  border-color: transparent;
+  background-color: color-mix(in oklab, var(--callout-color) 12%, transparent);
+  border-color: color-mix(in oklab, var(--callout-color) 25%, transparent);
 }
