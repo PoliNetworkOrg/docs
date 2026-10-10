@@ -49,7 +49,7 @@ flowchart TD
 
 The **Terraform** repository is responsible for managing and provisioning cloud infrastructure. In simple terms, it defines and creates the resources needed for the infrastructure, such as:  
 
-- **Networks and subnets** (Virtual Network, NAT Gateway for outbound traffic, Network Security Group)
+- **Networks and subnets** (Virtual Network, outbound-only public IP, Network Security Group)
 - **Virtual machines** (the `k3s01` K3s node)
 - **Storage** (Managed Disks for the node, Blob Storage for backups and Terraform state)
 - **Security services** (Key Vaults, managed identities, workload identity federation)
@@ -99,7 +99,7 @@ In summary, **Terraform builds the foundation on which applications run**, while
    request to that app's `Service`.
 
 The VM never accepts inbound connections from the Internet: the tunnel is an
-outbound connection, and outbound traffic leaves Azure through a NAT Gateway.
+outbound connection, and the VM's public IP is used only for outbound traffic.
 
 <Cards>
   <Card
