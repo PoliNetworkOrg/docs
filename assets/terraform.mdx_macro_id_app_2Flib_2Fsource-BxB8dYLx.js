@@ -114,8 +114,8 @@ can only read the other's resources through data sources, never declare them.
 - **\`environments/k3s\`:** the production K3s platform. It defines:
   - the \`k3s01\` VM (Debian 13 ARM64) and its two data disks, \`disk-k3s-fast\`
     (Premium SSD v2, 64 GB) and \`disk-k3s-standard\` (Standard SSD, 128 GB);
-  - the network: \`vnet-k3s\` (\`10.43.0.0/16\`), a NAT Gateway for outbound traffic,
-    and an NSG that denies all inbound traffic;
+  - the network: \`vnet-k3s\` (\`10.43.0.0/16\`), an outbound-only public IP on the
+    VM, and an NSG that denies all inbound traffic;
   - the Key Vaults \`kv-pn-apps\` (application secrets) and \`kv-pn-infra\`
     (platform secrets);
   - the managed identities, including the one External Secrets uses through
@@ -332,7 +332,7 @@ and our setup is tailored to our current needs.`},{heading:`repository-overview`
 provisioning and managing cloud infrastructure on Azure. Its default branch is
 **\`stable\`**.`},{heading:`repository-overview`,content:`The code is split into two independent **root modules** (the folders you run
 \`terraform\` in). Each root owns its resources and has its own state file; a root
-can only read the other's resources through data sources, never declare them.`},{heading:`repository-overview`,content:"**`environments/k3s`:** the production K3s platform. It defines:"},{heading:`repository-overview`,content:"the `k3s01` VM (Debian 13 ARM64) and its two data disks, `disk-k3s-fast`\n(Premium SSD v2, 64 GB) and `disk-k3s-standard` (Standard SSD, 128 GB);"},{heading:`repository-overview`,content:"the network: `vnet-k3s` (`10.43.0.0/16`), a NAT Gateway for outbound traffic,\nand an NSG that denies all inbound traffic;"},{heading:`repository-overview`,content:"the Key Vaults `kv-pn-apps` (application secrets) and `kv-pn-infra`\n(platform secrets);"},{heading:`repository-overview`,content:`the managed identities, including the one External Secrets uses through
+can only read the other's resources through data sources, never declare them.`},{heading:`repository-overview`,content:"**`environments/k3s`:** the production K3s platform. It defines:"},{heading:`repository-overview`,content:"the `k3s01` VM (Debian 13 ARM64) and its two data disks, `disk-k3s-fast`\n(Premium SSD v2, 64 GB) and `disk-k3s-standard` (Standard SSD, 128 GB);"},{heading:`repository-overview`,content:"the network: `vnet-k3s` (`10.43.0.0/16`), an outbound-only public IP on the\nVM, and an NSG that denies all inbound traffic;"},{heading:`repository-overview`,content:"the Key Vaults `kv-pn-apps` (application secrets) and `kv-pn-infra`\n(platform secrets);"},{heading:`repository-overview`,content:`the managed identities, including the one External Secrets uses through
 workload identity federation, and the public OIDC issuer the cluster's
 service-account tokens are verified against.`},{heading:`repository-overview`,content:"**`environments/legacy`:** everything from before the migration: the old AKS\ncluster and its Kubernetes/Helm resources (ArgoCD, Longhorn, Kubernetes\nDashboard, MariaDB, ...), plus shared resources such as the resource group\n`rg-polinetwork`, the backup storage account `polinetworkbackups` and the budgets."},{heading:`repository-overview`,content:`What runs *inside* the VM is not managed here: see K3s Node and Flux.`},{heading:`repository-overview`,content:`While the choices made in this implementation reflect our specific requirements
 and constraints, it's worth noting that other approaches exist for managing
@@ -458,8 +458,8 @@ can only read the other's resources through data sources, never declare them.`]}
 `,(0,n.jsxs)(t.ul,{children:[`
 `,(0,n.jsxs)(t.li,{children:[`the `,(0,n.jsx)(t.code,{children:`k3s01`}),` VM (Debian 13 ARM64) and its two data disks, `,(0,n.jsx)(t.code,{children:`disk-k3s-fast`}),`
 (Premium SSD v2, 64 GB) and `,(0,n.jsx)(t.code,{children:`disk-k3s-standard`}),` (Standard SSD, 128 GB);`]}),`
-`,(0,n.jsxs)(t.li,{children:[`the network: `,(0,n.jsx)(t.code,{children:`vnet-k3s`}),` (`,(0,n.jsx)(t.code,{children:`10.43.0.0/16`}),`), a NAT Gateway for outbound traffic,
-and an NSG that denies all inbound traffic;`]}),`
+`,(0,n.jsxs)(t.li,{children:[`the network: `,(0,n.jsx)(t.code,{children:`vnet-k3s`}),` (`,(0,n.jsx)(t.code,{children:`10.43.0.0/16`}),`), an outbound-only public IP on the
+VM, and an NSG that denies all inbound traffic;`]}),`
 `,(0,n.jsxs)(t.li,{children:[`the Key Vaults `,(0,n.jsx)(t.code,{children:`kv-pn-apps`}),` (application secrets) and `,(0,n.jsx)(t.code,{children:`kv-pn-infra`}),`
 (platform secrets);`]}),`
 `,(0,n.jsx)(t.li,{children:`the managed identities, including the one External Secrets uses through

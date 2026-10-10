@@ -11,9 +11,10 @@ SSH access to the node is restricted to the **IT Lead** group.
 
 ## How access works [#how-access-works]
 
-The K3s node `k3s01` has **no public IP**. Its private address is `10.43.1.4`,
-inside the Azure VNet `vnet-k3s`, and the Azure firewall (NSG) denies all inbound
-traffic. Nothing reaches the VM directly from the Internet:
+The K3s node `k3s01` lives at the private address `10.43.1.4`, inside the Azure
+VNet `vnet-k3s`. Its public IP is used only for outbound traffic: the Azure
+firewall (NSG) denies all inbound traffic. Nothing reaches the VM directly from
+the Internet:
 
 - websites reach the cluster through a **Cloudflare Tunnel** (an outbound connection
   opened by `cloudflared` pods running in the cluster);

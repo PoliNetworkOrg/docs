@@ -2224,7 +2224,7 @@ flowchart TD
 
 The **Terraform** repository is responsible for managing and provisioning cloud infrastructure. In simple terms, it defines and creates the resources needed for the infrastructure, such as:  
 
-- **Networks and subnets** (Virtual Network, NAT Gateway for outbound traffic, Network Security Group)
+- **Networks and subnets** (Virtual Network, outbound-only public IP, Network Security Group)
 - **Virtual machines** (the `k3s01` K3s node)
 - **Storage** (Managed Disks for the node, Blob Storage for backups and Terraform state)
 - **Security services** (Key Vaults, managed identities, workload identity federation)
@@ -2274,7 +2274,7 @@ In summary, **Terraform builds the foundation on which applications run**, while
    request to that app's `Service`.
 
 The VM never accepts inbound connections from the Internet: the tunnel is an
-outbound connection, and outbound traffic leaves Azure through a NAT Gateway.
+outbound connection, and the VM's public IP is used only for outbound traffic.
 
 <Cards>
   <Card
@@ -2321,7 +2321,7 @@ Production runs on a single VM, **`k3s01`**, created by Terraform
 |---|---|
 | Size | `Standard_E2ps_v6` (ARM64), West Europe, zone 1 |
 | OS | Debian 13 ARM64 |
-| Private IP | `10.43.1.4` (no public IP) |
+| Private IP | `10.43.1.4` (the public IP is outbound-only) |
 | Kubernetes | K3s, single server node, pinned version (see `ansible/vars/main.yml`) |
 | Admin user | `pnadmin` |
 
@@ -2377,8 +2377,9 @@ After that, Flux takes over everything inside the cluster (see [Flux](/docs/infr
 
 ### Security guardrails [#security-guardrails]
 
-- The VM has no public IP and the NSG denies all inbound traffic. The host
-  firewall drops everything except SSH, the node itself and cluster traffic.
+- The VM's public IP is outbound-only: the NSG denies all inbound traffic. The
+  host firewall also drops everything except the node itself, cluster traffic,
+  and SSH from private ranges (WARP sessions arrive from the `cloudflared` pods).
 - Pods cannot reach the Azure Instance Metadata Service (`169.254.169.254`), so
   they can't borrow the VM's managed identities.
 - An admission policy rejects pods using `hostNetwork`, `hostPID` or `hostIPC`
@@ -2573,8 +2574,8 @@ can only read the other's resources through data sources, never declare them.
 - **`environments/k3s`:** the production K3s platform. It defines:
   - the `k3s01` VM (Debian 13 ARM64) and its two data disks, `disk-k3s-fast`
     (Premium SSD v2, 64 GB) and `disk-k3s-standard` (Standard SSD, 128 GB);
-  - the network: `vnet-k3s` (`10.43.0.0/16`), a NAT Gateway for outbound traffic,
-    and an NSG that denies all inbound traffic;
+  - the network: `vnet-k3s` (`10.43.0.0/16`), an outbound-only public IP on the
+    VM, and an NSG that denies all inbound traffic;
   - the Key Vaults `kv-pn-apps` (application secrets) and `kv-pn-infra`
     (platform secrets);
   - the managed identities, including the one External Secrets uses through
@@ -2909,9 +2910,10 @@ SSH access to the node is restricted to the **IT Lead** group.
 
 ## How access works [#how-access-works]
 
-The K3s node `k3s01` has **no public IP**. Its private address is `10.43.1.4`,
-inside the Azure VNet `vnet-k3s`, and the Azure firewall (NSG) denies all inbound
-traffic. Nothing reaches the VM directly from the Internet:
+The K3s node `k3s01` lives at the private address `10.43.1.4`, inside the Azure
+VNet `vnet-k3s`. Its public IP is used only for outbound traffic: the Azure
+firewall (NSG) denies all inbound traffic. Nothing reaches the VM directly from
+the Internet:
 
 - websites reach the cluster through a **Cloudflare Tunnel** (an outbound connection
   opened by `cloudflared` pods running in the cluster);

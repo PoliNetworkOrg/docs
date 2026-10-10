@@ -10,7 +10,7 @@ Production runs on a single VM, **`k3s01`**, created by Terraform
 |---|---|
 | Size | `Standard_E2ps_v6` (ARM64), West Europe, zone 1 |
 | OS | Debian 13 ARM64 |
-| Private IP | `10.43.1.4` (no public IP) |
+| Private IP | `10.43.1.4` (the public IP is outbound-only) |
 | Kubernetes | K3s, single server node, pinned version (see `ansible/vars/main.yml`) |
 | Admin user | `pnadmin` |
 
@@ -66,8 +66,9 @@ After that, Flux takes over everything inside the cluster (see [Flux](/docs/infr
 
 ### Security guardrails [#security-guardrails]
 
-- The VM has no public IP and the NSG denies all inbound traffic. The host
-  firewall drops everything except SSH, the node itself and cluster traffic.
+- The VM's public IP is outbound-only: the NSG denies all inbound traffic. The
+  host firewall also drops everything except the node itself, cluster traffic,
+  and SSH from private ranges (WARP sessions arrive from the `cloudflared` pods).
 - Pods cannot reach the Azure Instance Metadata Service (`169.254.169.254`), so
   they can't borrow the VM's managed identities.
 - An admission policy rejects pods using `hostNetwork`, `hostPID` or `hostIPC`

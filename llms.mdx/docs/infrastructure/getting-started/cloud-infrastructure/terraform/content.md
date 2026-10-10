@@ -116,8 +116,8 @@ can only read the other's resources through data sources, never declare them.
 - **`environments/k3s`:** the production K3s platform. It defines:
   - the `k3s01` VM (Debian 13 ARM64) and its two data disks, `disk-k3s-fast`
     (Premium SSD v2, 64 GB) and `disk-k3s-standard` (Standard SSD, 128 GB);
-  - the network: `vnet-k3s` (`10.43.0.0/16`), a NAT Gateway for outbound traffic,
-    and an NSG that denies all inbound traffic;
+  - the network: `vnet-k3s` (`10.43.0.0/16`), an outbound-only public IP on the
+    VM, and an NSG that denies all inbound traffic;
   - the Key Vaults `kv-pn-apps` (application secrets) and `kv-pn-infra`
     (platform secrets);
   - the managed identities, including the one External Secrets uses through
