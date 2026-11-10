@@ -1,0 +1,168 @@
+---
+title: "Protect an App with SSO"
+---
+
+## Introduction
+
+This guide puts an app behind the [SSO gateway](/docs/infrastructure/getting-started/cloud-infrastructure/sso):
+visitors sign in with PoliNetwork Auth, and only people with a given permission get
+through. Use it for apps without an OIDC login of their own. If the app supports OIDC,
+give it its own client on Auth instead.
+
+It assumes the app is already deployed and published on a domain
+(see [Deploy a New App](/docs/infrastructure/Guides/deploy-a-new-app)). In the examples,
+the namespace is `<k8s-namespace>` and the permission is `<app>:access`.
+
+## Procedure
+
+1. [Create the permission](#create-the-permission) on Auth
+2. [Add the Middleware](#add-the-middleware)
+3. [Use it from the Ingress](#use-it-from-the-ingress)
+4. [Admit only Traefik](#admit-only-traefik)
+5. Open a PR into polinetwork-cd, wait for CI, merge
+6. [Check it](#check-it), and only then disable the app's own login if you want to
+
+### Create the permission
+
+On [auth.polinetwork.org](https://auth.polinetwork.org), under *Access → Permissions*,
+create a permission named `<app>:access` (e.g. `uptime:access`). Then grant it to the roles
+that should use the app, under *Access → Roles*.
+
+You need `idp:permissions:write` and `idp:roles:write` for this; ask an IdP Admin
+otherwise. No new application is needed: every app behind the gateway shares the
+*SSO Gateway* client.
+
+### Add the Middleware
+
+```yaml title="apps/<k8s-namespace>/middleware.yaml"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: sso
+spec:
+  forwardAuth:
+    address: http://oauth2-proxy.sso.svc.cluster.local:4180/?allowed_groups=<app>:access
+    trustForwardHeader: true
+    authResponseHeaders:
+      - X-Auth-Request-User
+      - X-Auth-Request-Email
+      - X-Auth-Request-Preferred-Username
+    addAuthCookiesToResponse:
+      - __Secure-pn_sso
+      - __Secure-pn_sso_0
+      - __Secure-pn_sso_1
+      - __Secure-pn_sso_2
+    maxResponseBodySize: 1048576
+```
+
+Change only the permission in `address`. The rest is the same for every app:
+
+- `trustForwardHeader` passes the `https` scheme and the host to oauth2-proxy, so visitors
+  come back to the right page after signing in.
+- `authResponseHeaders` tells the app who is signed in: `X-Auth-Request-User` and
+  `X-Auth-Request-Email` both carry the person's email address. Traefik also deletes
+  these headers from incoming requests, so visitors can't forge them. Only trust them in
+  an app that the `NetworkPolicy` below protects.
+- `addAuthCookiesToResponse` sends the refreshed session cookie back to the browser.
+  **Don't remove it**: without it, sessions break after about 4 minutes.
+
+<Callout type="note" title="One permission per Middleware">
+
+`allowed_groups` takes a comma-separated list, and **any one** permission is enough
+(`?allowed_groups=a:access,b:access`). For different rules on different paths, add one
+Middleware per rule, with one `Ingress` each.
+
+</Callout>
+
+Add the file to `apps/<k8s-namespace>/kustomization.yaml`, and make the app's Flux
+Kustomization in `clusters/k3s/apps/<k8s-namespace>.yaml` wait for the gateway:
+
+```yaml title="clusters/k3s/apps/<k8s-namespace>.yaml"
+  dependsOn:
+    - name: infrastructure-secret-stores
+    - name: infrastructure-storage
+    - name: infrastructure-traefik
+    # [!code ++]
+    - name: infrastructure-sso
+```
+
+### Use it from the Ingress
+
+Reference the Middleware as `<k8s-namespace>-<name>@kubernetescrd`:
+
+```yaml title="apps/<k8s-namespace>/ingress.yaml"
+metadata:
+  name: <app>
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    # [!code ++]
+    traefik.ingress.kubernetes.io/router.middlewares: <k8s-namespace>-sso@kubernetescrd
+```
+
+The annotation applies to every host and path of that `Ingress`. Anything that must stay
+public (a status page, a webhook, a health endpoint) goes in a **separate** `Ingress`
+without the annotation, and that one should list exact paths, not `/`. See
+`apps/uptime-kuma/ingress.yaml`: `uptime.polinetwork.org` needs `uptime:access`, while
+`status.polinetwork.org` lists only the status page paths.
+
+### Admit only Traefik
+
+The gateway protects the route, not the pod. Add a `NetworkPolicy` so nothing else in the
+cluster can call the app's Service directly:
+
+```yaml title="apps/<k8s-namespace>/network-policy.yaml"
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-traefik
+spec:
+  podSelector:
+    matchLabels:
+      app: <app>
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - port: <port>
+          protocol: TCP
+```
+
+If other pods legitimately call the app (e.g. Prometheus scraping it), add them as further
+`from` entries.
+
+<Callout type="warning" title="Disabling the app's own login">
+
+Turn off the app's built-in login only once all of the following hold. Otherwise anyone
+who reaches the app is an admin.
+
+- The `NetworkPolicy` is applied.
+- Every public `Ingress` lists only public paths.
+- You have checked the gateway in a private window.
+
+</Callout>
+
+### Check it
+
+In a private window:
+
+1. Open the app. You should land on `auth.polinetwork.org`, and after signing in, back on
+   the page you opened.
+2. Sign in with an account **without** the permission: you should get `403 Forbidden`.
+3. Stay on the app for more than 5 minutes and keep using it: you shouldn't be sent back
+   to Auth.
+
+## Troubleshooting
+
+| Symptom | Likely cause |
+|---------|--------------|
+| `403` for everyone | The permission isn't granted to your role, or its name differs from `allowed_groups`. Check *Access → Roles* on Auth. |
+| Back to the app on `http://` after sign-in | `trustForwardHeader: true` is missing from the Middleware. |
+| Sent back to Auth every few minutes | `addAuthCookiesToResponse` is missing or doesn't list `__Secure-pn_sso`. |
+| `404` on the app | The Middleware name or namespace in the annotation is wrong: Traefik drops the route. Check Traefik's logs in `kube-system`. |
+| `500` on every protected app | oauth2-proxy is down: check `kubectl get pods -n sso` and the `infrastructure-sso` Kustomization in the Flux Web UI. |

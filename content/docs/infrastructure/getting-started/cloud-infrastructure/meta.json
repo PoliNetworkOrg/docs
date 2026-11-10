@@ -1,1 +1,1 @@
-{ "title": "Cloud Infrastructure", "pages": ["terraform", "k3s-node", "flux"] }
+{ "title": "Cloud Infrastructure", "pages": ["terraform", "k3s-node", "flux", "sso"] }
