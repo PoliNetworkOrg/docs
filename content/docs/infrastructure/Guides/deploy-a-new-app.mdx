@@ -232,6 +232,9 @@ spec:
 Cloudflare terminates HTTPS, so the `Ingress` only needs the plain `web` entrypoint:
 no certificates in the cluster.
 
+If only some people should open the app and it has no login of its own, put it behind the
+SSO gateway: see [Protect an App with SSO](/docs/infrastructure/Guides/protect-an-app-with-sso).
+
 ## Automatic image updates
 Flux can redeploy the app every time a new `latest` image is published, pinning the
 image digest (see [how it works](/docs/infrastructure/getting-started/cloud-infrastructure/flux#automatic-image-updates)).  

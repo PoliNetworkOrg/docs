@@ -65,7 +65,8 @@ that is not listed there does nothing.
 |-----------|--------------|
 | `security` | Admission policies (no host namespaces, no pods as `keyvault-reader`) |
 | `storage` | [local-path provisioner](https://github.com/rancher/local-path-provisioner) and the `fast` / `standard` storage classes |
-| `traefik` | Makes the bundled Traefik a `ClusterIP` service |
+| `traefik` | Makes the bundled Traefik a `ClusterIP` service and trusts `X-Forwarded-*` from `cloudflared` |
+| `sso` | The [SSO gateway](/docs/infrastructure/getting-started/cloud-infrastructure/sso) (oauth2-proxy) for apps without their own login |
 | `external-secrets` | [External Secrets Operator](https://external-secrets.io/), installed with Helm |
 | `secret-stores` | The `kv-pn-apps` and `kv-pn-infra` `ClusterSecretStore`s |
 | `cloudflared` | The Cloudflare Tunnel connector (2 replicas) |

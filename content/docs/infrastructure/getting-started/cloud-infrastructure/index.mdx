@@ -96,7 +96,9 @@ In summary, **Terraform builds the foundation on which applications run**, while
    `cloudflared` pods in the cluster.
 3. `cloudflared` forwards it to **Traefik**, the K3s ingress controller.
 4. Traefik picks the app from the `Ingress` whose `host` matches, and forwards the
-   request to that app's `Service`.
+   request to that app's `Service`. If the `Ingress` uses the SSO Middleware, Traefik
+   first asks the [SSO gateway](/docs/infrastructure/getting-started/cloud-infrastructure/sso)
+   whether the visitor is signed in and holds the app's permission.
 
 The VM never accepts inbound connections from the Internet: the tunnel is an
 outbound connection, and the VM's public IP is used only for outbound traffic.
@@ -116,6 +118,11 @@ outbound connection, and the VM's public IP is used only for outbound traffic.
     title="Flux"
     href="/docs/infrastructure/getting-started/cloud-infrastructure/flux"
     description="How Flux deploys the polinetwork-cd repository to the K3s cluster."
+  />
+  <Card
+    title="SSO Gateway"
+    href="/docs/infrastructure/getting-started/cloud-infrastructure/sso"
+    description="How Traefik and oauth2-proxy sign people in with PoliNetwork Auth for apps without their own login."
   />
 </Cards>
 
